@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>تخته‌کلاس | استودیو آموزش آنلاین</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0f3d3e" />
+<style>
+:root{
+  --ink-teal:#0f3d3e;
+  --ink-teal-2:#134a4b;
+  --chalk:#f4efe3;
+  --amber:#e2a33d;
+  --clay:#c9622f;
+  --moss:#4c8b6b;
+  --paper:#fbf8f1;
+  --line:#d8cfb8;
+  --shadow: 0 10px 30px rgba(15,61,62,.25);
+  --radius:14px;
+  --board-day-bg:#fbfbf8;
+  --board-day-grid:#e7e2d3;
+  --board-night-bg:#132a2b;
+  --board-night-grid:#1d4243;
+  --font-display: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;height:100%;
+  font-family: var(--font-display);
+  background: var(--ink-teal);
+  color: var(--chalk);
+  overflow:hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+body.day{
+  --ink-teal:#fbf8f1;
+  --ink-teal-2:#f1ead7;
+  --chalk:#2b2620;
+  background: var(--ink-teal);
+  color:#2b2620;
+}
+#app{
+  display:flex;flex-direction:column;height:100%;
+  width:100%;
+}
+
+/* ---------- Header ---------- */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;
+  background: linear-gradient(180deg, var(--ink-teal-2), var(--ink-teal));
+  border-bottom:2px solid rgba(226,163,61,.35);
+  flex-shrink:0;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.3px;}
+.brand .dot{width:12px;height:12px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(226,163,61,.18);}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+button, .btn{
+  border:1px solid rgba(226,163,61,.4);
+  background: rgba(255,255,255,.06);
+  color:inherit;
+  padding:8px 12px;border-radius:10px;
+  font-family:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  transition:.15s transform, .15s background;
+  white-space:nowrap;
+}
+body.day button, body.day .btn{ background: rgba(15,61,62,.06); border-color: rgba(201,98,47,.35);}
+button:hover{transform:translateY(-1px); background: rgba(226,163,61,.18);}
+button.active{background:var(--amber); color:#20180a; border-color:var(--amber);}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+select, input[type=text], input[type=number]{
+  border:1px solid rgba(226,163,61,.4);
+  background: rgba(255,255,255,.06);
+  color:inherit;padding:7px 10px;border-radius:10px;font-family:inherit;font-size:13px;
+}
+body.day select, body.day input[type=text], body.day input[type=number]{background:rgba(15,61,62,.06);}
+
+/* ---------- Toolbar ---------- */
+#toolbar{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:8px 14px;background:rgba(0,0,0,.15);
+  border-bottom:1px solid rgba(226,163,61,.2);
+  flex-shrink:0;
+}
+body.day #toolbar{background:rgba(0,0,0,.03);}
+.tool-group{display:flex;gap:4px;align-items:center;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,.04);}
+body.day .tool-group{background:rgba(15,61,62,.04);}
+.tool-group .sep{width:1px;height:22px;background:rgba(226,163,61,.3);margin:0 4px;}
+.icon-btn{
+  width:36px;height:36px;padding:0;justify-content:center;border-radius:10px;
+}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;}
+#colorSwatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--amber);cursor:pointer;padding:0;overflow:hidden;}
+#colorSwatch input{opacity:0;width:100%;height:100%;cursor:pointer;}
+#sizeRange{width:90px;}
+.size-preview{width:22px;height:22px;border-radius:50%;background:currentColor;display:inline-block;}
+
+/* ---------- Main area ---------- */
+main{
+  flex:1;display:flex;min-height:0;position:relative;
+}
+#boardWrap{
+  flex:1;position:relative;overflow:hidden;
+  background: var(--board-day-grid);
+  display:flex;align-items:center;justify-content:center;
+}
+#boardStage{
+  position:relative;
+  box-shadow: var(--shadow);
+  border-radius: 4px;
+  overflow:hidden;
+  touch-action:none;
+}
+#bgCanvas, #drawCanvas{
+  position:absolute;top:0;left:0;
+  width:100%;height:100%;
+}
+#drawCanvas{cursor:crosshair;}
+body.night-board #bgCanvas{background:var(--board-night-bg);}
+body:not(.night-board) #bgCanvas{background:var(--board-day-bg);}
+
+/* Page nav for uploaded book/pdf */
+#pageNav{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:none;gap:8px;align-items:center;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+  padding:6px 12px;border-radius:20px;color:#fff;font-size:13px;
+  z-index:20;
+}
+#pageNav button{padding:4px 10px;}
+
+/* camera PiP */
+#camPiP{
+  position:absolute;width:180px;height:135px;border-radius:12px;overflow:hidden;
+  border:3px solid var(--amber); box-shadow:var(--shadow);
+  cursor:move; display:none; z-index:30; top:16px; inset-inline-end:16px;
+  background:#000;
+}
+#camPiP video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+#camPiP .resize{position:absolute;width:14px;height:14px;bottom:2px;inset-inline-start:2px;cursor:nwse-resize;opacity:.7;}
+
+/* side panel (record / live class) */
+#sidePanel{
+  width:300px;flex-shrink:0;background:rgba(0,0,0,.18);
+  border-inline-start:1px solid rgba(226,163,61,.25);
+  padding:14px;overflow-y:auto;display:none;
+}
+body.day #sidePanel{background:rgba(0,0,0,.03);}
+#sidePanel.open{display:block;}
+#sidePanel h3{margin:0 0 8px;font-size:14px;color:var(--amber);display:flex;align-items:center;gap:6px;}
+.panel-card{background:rgba(255,255,255,.05);border:1px solid rgba(226,163,61,.2);border-radius:12px;padding:12px;margin-bottom:12px;}
+body.day .panel-card{background:rgba(15,61,62,.04);}
+.panel-card p{font-size:12px;line-height:1.9;opacity:.85;margin:6px 0;}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0;}
+.hint{font-size:11px;opacity:.6;line-height:1.8;}
+.student-item{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.05);padding:6px 8px;border-radius:8px;margin-bottom:6px;font-size:12px;}
+body.day .student-item{background:rgba(15,61,62,.05);}
+.student-item .mic-dot{width:8px;height:8px;border-radius:50%;background:#4c8b6b;display:inline-block;margin-inline-end:6px;}
+.badge{background:var(--amber);color:#20180a;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:700;}
+#classCode{font-size:14px;font-weight:800;letter-spacing:.5px;color:var(--amber);text-align:center;padding:10px;background:rgba(0,0,0,.2);border-radius:10px;margin:6px 0;word-break:break-all;font-family:monospace;direction:ltr;}
+body.day #classCode{background:rgba(0,0,0,.05);}
+#remoteVideos{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+#remoteVideos video{width:100%;border-radius:10px;background:#000;}
+
+/* recording indicator */
+#recIndicator{
+  position:absolute;top:14px;inset-inline-start:14px;z-index:25;
+  display:none;align-items:center;gap:6px;background:rgba(200,40,40,.9);
+  color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;
+}
+#recIndicator .pulse{width:9px;height:9px;border-radius:50%;background:#fff;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* toast */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:rgba(20,20,20,.92);color:#fff;padding:10px 18px;border-radius:10px;
+  font-size:13px;z-index:100;opacity:0;pointer-events:none;transition:.25s;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+/* modal */
+#modalOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+  display:none;align-items:center;justify-content:center;
+}
+#modalOverlay.open{display:flex;}
+#modalBox{
+  background:var(--ink-teal-2);border:1px solid rgba(226,163,61,.4);border-radius:16px;
+  padding:20px;max-width:420px;width:90%;box-shadow:var(--shadow);
+}
+#modalBox h3{margin:0 0 10px;color:var(--amber);}
+#modalBox p{font-size:13px;line-height:1.8;opacity:.9;}
+
+input[type=range]{accent-color:var(--amber);}
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-thumb{background:rgba(226,163,61,.4);border-radius:10px;}
+
+@media (max-width: 820px){
+  #sidePanel{position:absolute;inset-inline-end:0;top:0;bottom:0;z-index:40;width:88%;max-width:340px;box-shadow:var(--shadow);}
+  .brand span.tag{display:none;}
+  #camPiP{width:120px;height:90px;}
+}
+
+/* ---------- حالت ورود دانش‌آموز (وقتی از روی لینک کلاس باز می‌شود) ---------- */
+body.student-mode #toolbar{display:none;}
+body.student-mode #boardWrap{display:none;}
+body.student-mode #btnRecordPanel,
+body.student-mode #btnLivePanel{display:none;}
+body.student-mode #teacherOnlySection{display:none;}
+body.student-mode #sidePanel{
+  display:block !important;position:static;width:100%;max-width:480px;margin:0 auto;
+  border:none;padding:22px;box-shadow:none;background:transparent;
+}
+body.student-mode main{align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;}
+body.student-mode #studentJoinSection{
+  max-width:440px;margin:6vh auto 0;padding:22px;border-radius:18px;
+}
+body.student-mode #joinCode{
+  text-align:center;font-weight:700;letter-spacing:1px;background:rgba(226,163,61,.12);
+  direction:ltr;font-family:monospace;
+}
+#roomNameInput{direction:ltr;font-family:monospace;}
+body.student-mode #studentName{font-size:15px;padding:12px;}
+body.student-mode #btnJoinClass{font-size:14px;padding:12px 18px;}
+#studentJoinTitle{text-align:center;font-size:16px;}
+</style>
+</head>
+<body class="night-board">
+<div id="app">
+
+  <header>
+    <div class="brand"><span class="dot"></span> تخته‌کلاس <span class="tag" style="font-weight:400;font-size:12px;opacity:.7">| استودیو ساخت کلیپ آموزشی</span></div>
+    <div class="header-actions">
+      <button id="btnDay" class="icon-btn" title="حالت روز/شب">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </button>
+      <button id="btnFullscreen" class="icon-btn" title="تمام صفحه">
+        <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      </button>
+      <button id="btnRecordPanel">🎬 ضبط ویدیو</button>
+      <button id="btnLivePanel">📡 کلاس آنلاین</button>
+      <button id="btnHelp" class="icon-btn" title="راهنما">؟</button>
+    </div>
+  </header>
+
+  <div id="toolbar">
+    <div class="tool-group">
+      <button class="icon-btn tool-btn active" data-tool="pen" title="خودکار">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+      <button class="icon-btn tool-btn" data-tool="highlighter" title="ماژیک هایلایت">
+        <svg viewBox="0 0 24 24"><path d="M9 11 6 20l-3 1 1-3 9-9"/><path d="M13 7l4 4 3-3-4-4z"/></svg>
+      </button>
+      <button class="icon-btn tool-btn" data-tool="eraser" title="پاک‌کن">
+        <svg viewBox="0 0 24 24"><path d="M7 21h9M4.5 13.5 12 6l6 6-6.5 6.5H8Z"/></svg>
+      </button>
+      <span class="sep"></span>
+      <button class="icon-btn tool-btn" data-tool="line" title="خط راست">
+        <svg viewBox="0 0 24 24"><path d="M4 20 20 4"/></svg>
+      </button>
+      <button class="icon-btn tool-btn" data-tool="rect" title="مستطیل">
+        <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1"/></svg>
+      </button>
+      <button class="icon-btn tool-btn" data-tool="circle" title="دایره">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+      </button>
+      <button class="icon-btn tool-btn" data-tool="triangle" title="مثلث">
+        <svg viewBox="0 0 24 24"><path d="M12 4 21 20H3Z"/></svg>
+      </button>
+      <button class="icon-btn tool-btn" data-tool="text" title="متن">
+        <svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14"/></svg>
+      </button>
+    </div>
+
+    <div class="tool-group">
+      <label id="colorSwatch" title="رنگ خودکار">
+        <input type="color" id="colorPicker" value="#e2a33d"/>
+      </label>
+      <input type="range" id="sizeRange" min="1" max="40" value="4"/>
+      <span class="size-preview" id="sizePreview" style="width:6px;height:6px;"></span>
+    </div>
+
+    <div class="tool-group">
+      <button id="btnUndo" class="icon-btn" title="واگرد"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
+      <button id="btnRedo" class="icon-btn" title="ازنو"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h1"/></svg></button>
+      <button id="btnClear" class="icon-btn" title="پاک کردن تخته"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+    </div>
+
+    <div class="tool-group">
+      <button id="btnUploadImg">🖼️ آپلود عکس</button>
+      <button id="btnUploadBook">📘 آپلود کتاب/PDF</button>
+      <button id="btnCam">🎥 دوربین معلم</button>
+      <input type="file" id="fileImg" accept="image/*" hidden/>
+      <input type="file" id="fileBook" accept="application/pdf" hidden/>
+    </div>
+    <div class="tool-group" id="docSwitcher">
+      <button class="doc-btn active" data-doc="board" title="نمایش تخته خالی">📄 تخته</button>
+      <button class="doc-btn" data-doc="image" id="btnDocImage" disabled title="بازگشت به عکس بارگذاری‌شده">🖼️ عکس</button>
+      <button class="doc-btn" data-doc="book" id="btnDocBook" disabled title="بازگشت به کتاب بارگذاری‌شده">📘 کتاب</button>
+    </div>
+  </div>
+
+  <main>
+    <div id="boardWrap">
+      <div id="boardStage">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="drawCanvas"></canvas>
+        <div id="camPiP">
+          <video id="camVideo" autoplay muted playsinline></video>
+          <div class="resize" id="camResize"></div>
+        </div>
+      </div>
+      <div id="pageNav">
+        <button id="pgPrev">‹ صفحه قبل</button>
+        <span id="pgLabel">۱ / ۱</span>
+        <button id="pgNext">صفحه بعد ›</button>
+      </div>
+      <div id="recIndicator"><span class="pulse"></span> در حال ضبط…</div>
+    </div>
+
+    <div id="sidePanel">
+      <div id="panelRecord" style="display:none">
+        <h3>🎬 ضبط کلیپ آموزشی</h3>
+        <div class="panel-card">
+          <div class="row">
+            <label style="font-size:12px">کیفیت خروجی:</label>
+            <select id="qualitySelect">
+              <option value="low">فشرده (سریع/کم‌حجم)</option>
+              <option value="med" selected>متعادل (پیشنهادی)</option>
+              <option value="high">کیفیت بالا</option>
+            </select>
+          </div>
+          <div class="row">
+            <label style="font-size:12px">صدا از میکروفن:</label>
+            <button id="btnMicToggle" class="active">روشن</button>
+          </div>
+          <p class="hint">حجم فایل با انتخاب بیت‌ریت و رزولوشن مناسب کنترل می‌شود (کدک VP9)، طوری که کیفیت تصویر افت محسوسی نداشته باشد. فشرده‌سازی بیشتر بعد از ضبط معمولاً با کمی افت کیفیت همراه است.</p>
+          <div class="row">
+            <button id="btnStartRec" style="background:var(--clay);color:#fff;flex:1;justify-content:center;">⏺ شروع ضبط</button>
+            <button id="btnStopRec" style="background:#555;color:#fff;flex:1;justify-content:center;" disabled>⏹ پایان ضبط</button>
+          </div>
+          <div id="downloadArea"></div>
+        </div>
+      </div>
+
+      <div id="panelLive" style="display:none">
+        <h3>📡 کلاس آنلاین (بدون نیاز به نصب یا سرور)</h3>
+        <div class="panel-card teacher-only" id="teacherOnlySection">
+          <p class="hint">فایل برنامه را یک‌بار برای دانش‌آموزان بفرستید (لینک یا فایل HTML). آن‌ها فقط با مرورگر بازش می‌کنند، اسمشان را می‌نویسند و وارد می‌شوند؛ نیازی به نصب یا سرور اختصاصی نیست (اتصال از طریق شبکه‌ی رایگان WebRTC انجام می‌شود).</p>
+          <div class="row">
+            <input type="text" id="roomNameInput" placeholder="نام دلخواه کلاس (اختیاری، مثلاً: riazi-hashtom)" style="flex:1"/>
+          </div>
+          <p class="hint">اگر این را پر کنید، لینک کلاس همیشه همین می‌ماند و لازم نیست هر بار لینک تازه بفرستید. اگر خالی بگذارید، هر بار که «شروع کلاس» را بزنید یک کد تازه ساخته می‌شود.</p>
+          <div class="row">
+            <button id="btnStartClass" style="flex:1;justify-content:center;background:var(--moss);color:#fff;">شروع کلاس به‌عنوان معلم</button>
+          </div>
+          <div id="teacherClassBox" style="display:none">
+            <div id="classCode">------</div>
+            <div class="row">
+              <button id="btnCopyLink" style="flex:1;justify-content:center">کپی لینک دعوت</button>
+              <button id="btnCopyCode" style="flex:1;justify-content:center">کپی کد</button>
+            </div>
+            <p class="hint">بهترین راه، فرستادن همان «لینک دعوت» است (روی گوشی دانش‌آموز مستقیم باز می‌شود). کد فقط برای وارد کردن دستی است.</p>
+            <h3 style="margin-top:14px">دانش‌آموزان متصل</h3>
+            <div id="studentList"><p class="hint">هنوز کسی وصل نشده…</p></div>
+          </div>
+        </div>
+
+        <div class="panel-card" id="studentJoinSection">
+          <h3 id="studentJoinTitle">ورود دانش‌آموز به کلاس</h3>
+          <div class="row pre-join-row" style="margin-top:6px">
+            <input type="text" id="studentName" placeholder="اسم و فامیل خود را بنویسید" style="flex:1"/>
+          </div>
+          <div class="row pre-join-row">
+            <input type="text" id="joinCode" placeholder="کد کلاس معلم" style="flex:1"/>
+            <button id="btnJoinClass" style="background:var(--amber);color:#20180a;">ورود به کلاس</button>
+          </div>
+          <p class="hint pre-join-row" id="joinStatusHint"></p>
+          <div id="studentClassBox" style="display:none">
+            <p class="hint">به کلاس وصل شدید ✅ تصویر و صدای معلم را می‌بینید.</p>
+            <video id="teacherStreamVideo" autoplay playsinline style="width:100%;border-radius:10px;background:#000;"></video>
+            <div class="row">
+              <button id="btnRaiseCam">📷 درخواست نمایش دوربین من</button>
+            </div>
+          </div>
+          <div id="remoteVideos"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3>راهنمای سریع</h3>
+    <p>
+      • ابزار خودکار/ماژیک/پاک‌کن و شکل‌ها را از نوار بالا انتخاب کنید و روی تخته بکشید.<br/>
+      • رنگ و ضخامت نوک از کنار آن قابل تنظیم است.<br/>
+      • با «آپلود کتاب/PDF» صفحات کتاب می‌آید و می‌توانید رویش بنویسید؛ صفحه‌به‌صفحه یادداشت‌ها جدا ذخیره می‌شود.<br/>
+      • دکمه «دوربین معلم» تصویر شما را در گوشهٔ تخته نشان می‌دهد (قابل جابه‌جایی).<br/>
+      • «ضبط ویدیو» خروجی WebM با کیفیت مناسب و حجم کنترل‌شده می‌سازد.<br/>
+      • «کلاس آنلاین» یک اتصال مستقیم (بدون سرور اختصاصی شما) بین شما و دانش‌آموزان برقرار می‌کند؛ در شبکه‌های محدود مدرسه/اداره ممکن است نیاز به تنظیمات شبکه باشد.
+    </p>
+    <div class="row" style="justify-content:flex-end;margin-top:10px">
+      <button id="btnCloseModal" style="background:var(--amber);color:#20180a;">متوجه شدم</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
