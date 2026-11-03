@@ -36,7 +36,7 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 #cr{position:fixed;right:1px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:11px;color:var(--tx);opacity:.45;pointer-events:none;user-select:none;-webkit-user-select:none;z-index:1;white-space:nowrap;font-family:Vazirmatn,Tahoma,sans-serif}
 </style></head><body>
 <canvas id="c"></canvas><div id="cr">تهیه‌کننده: وحیده محجوب</div><video id="vid" playsinline muted style="position:fixed;width:2px;height:2px;opacity:0;pointer-events:none"></video>
-<div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qu" title="برگردان">↶</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
+<div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
 <div id="bar" class="pn"></div>
 <div id="sh" class="pn h">
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
@@ -73,7 +73,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else if(d.a=='undo'){const s=secs[cur],it=s.hist.pop();if(it){s.rhist.push(it);it.redo.push(it.strokes.pop());redrawInk(it);scheduleSave()}}
  else if(d.a=='redo'){const s=secs[cur],it=s.rhist.pop();if(it){s.hist.push(it);it.strokes.push(it.redo.pop());redrawInk(it);scheduleSave()}}
  else if(d.a=='theme'){document.documentElement.classList.toggle('day');theme()}
- else if(d.a=='vplay')vtog();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
+ else if(d.a=='vplay')vtog();else if(d.a=='clr')clearInk();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
  else if(d.a=='new')addSec(mkSec('تخته',[{h:2400}],'board'));
  else if(d.a=='copy'){const it=midItem();if(it.pdf&&!it.bg){toast('صفحه هنوز آماده نیست');return}if(!it.ink&&it.strokes.length)redrawInk(it);
   const c=mk(W,it.h),x=c.getContext('2d');x.fillStyle=(it.bg||it.img)?'#fff':TH.pp;x.fillRect(0,0,W,it.h);it.bg&&x.drawImage(it.bg,0,0);it.video&&x.drawImage(it.video,0,0,W,it.h);it.ink&&x.drawImage(it.ink,0,0);
@@ -135,7 +135,8 @@ function paint(c,s){c.save();sty(c,s);const p=s.pts,a=p[0],b=p[p.length-1];c.beg
  else if(s.tool=='tri'){c.moveTo((a.x+b.x)/2,a.y);c.lineTo(b.x,b.y);c.lineTo(a.x,b.y);c.closePath()}
  else{c.moveTo(a.x,a.y);for(let i=1;i<p.length-1;i++)c.quadraticCurveTo(p[i].x,p[i].y,(p[i].x+p[i+1].x)/2,(p[i].y+p[i+1].y)/2);c.lineTo(b.x,b.y)}
  c.stroke();c.restore()}
-function redrawInk(it){if(!it.ink)it.ink=mk(W,it.h);const c=it.ink.getContext('2d');c.clearRect(0,0,W,it.h);it.strokes.forEach(s=>paint(c,s));dirty=1}
+function redrawInk(it){if(!it.ink)it.ink=mk(W,it.h);const c=it.ink.getContext('2d');c.clearRect(0,0,W,it.h);it.strokes.forEach(s=>s.tool=='clear'?c.clearRect(0,0,W,it.h):paint(c,s));dirty=1}
+function clearInk(){const s=secs[cur],it=itemAt(s,(innerHeight/2-V.y)/V.s),l=it.strokes[it.strokes.length-1];if(!l||l.tool=='clear'){toast('چیزی برای پاک کردن نیست');return}it.strokes.push({tool:'clear',color:'#000',w:1,pts:[]});it.redo=[];s.hist.push(it);s.rhist=[];redrawInk(it);scheduleSave();toast('همه‌ی نوشته‌ها پاک شد (↶ برمی‌گرداند)')}
 const pt=(e,it)=>({x:(e.clientX-V.x)/V.s,y:(e.clientY-V.y)/V.s-it.y});
 function gest(){const a=[...ptr.values()];if(!a.length)return null;const t=performance.now();if(a.length==1)return{x:a[0].x,y:a[0].y,d:0,n:1,t};const[p,q]=a;return{x:(p.x+q.x)/2,y:(p.y+q.y)/2,d:Math.hypot(p.x-q.x,p.y-q.y),n:2,t}}
 // which touches write? pen/mouse always; finger/capacitive pen depends on mode
