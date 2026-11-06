@@ -40,9 +40,10 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 <div id="bar" class="pn"></div>
 <div id="sh" class="pn h">
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
-  <div class="r"><label class="b p">📕 کتاب PDF<input type="file" accept="application/pdf" hidden id="fp"></label><label class="b">🖼 عکس<input type="file" accept="image/*" hidden id="fi"></label><label class="b p">🎞 ویدیو<input type="file" accept="video/*" hidden id="fv"></label><button data-a="new">＋ تخته</button><button data-a="fit">اندازه‌ی صفحه</button></div>
+  <div class="r"><label class="b p">📕 کتاب / پاورپوینت<input type="file" accept="application/pdf,.pdf,.ppt,.pptx,.pps,.ppsx,.odp" hidden id="fp"></label><label class="b">🖼 عکس<input type="file" accept="image/*" hidden id="fi"></label><label class="b p">🎞 ویدیو<input type="file" accept="video/*" hidden id="fv"></label><button data-a="new">＋ تخته</button><button data-a="fit">اندازه‌ی صفحه</button></div>
  <div class="r" id="vr" style="display:none"><button data-a="vplay">▶</button><input type="range" id="vs" min="0" max="1" step="0.1" value="0" style="flex:1;min-width:100px;accent-color:var(--ac)"><span id="vt" style="font-size:12px">0:00</span></div>
  <div class="r" id="vo" style="display:none;flex-direction:column;align-items:flex-start"><label><input type="checkbox" id="va" checked> با شروع ضبط، ویدیو هم خودکار پخش شود</label><label><input type="checkbox" id="ve" checked> با تمام شدن ویدیو، ضبط هم تمام شود</label></div>
+ <div class="r"><button data-a="music">🎵 آهنگ پس‌زمینه روی کلیپ…</button></div>
  <div class="r"><button data-a="copy">⇄ صفحه‌ی وسط صفحه‌نمایش ← تخته‌ی جدید</button></div>
  <div class="r"><label>نوشتن با:
   <select id="md"><option value="two">خودکار/انگشت — اسکرول با دو انگشت</option><option value="auto">تشخیص با اندازه‌ی لمس — اسکرول با یک انگشت</option><option value="pen">فقط استایلوس فعال</option></select></label><button data-a="cal">کالیبره</button></div>
@@ -73,7 +74,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else if(d.a=='undo'){const s=secs[cur],it=s.hist.pop();if(it){s.rhist.push(it);it.redo.push(it.strokes.pop());redrawInk(it);scheduleSave()}}
  else if(d.a=='redo'){const s=secs[cur],it=s.rhist.pop();if(it){s.hist.push(it);it.strokes.push(it.redo.pop());redrawInk(it);scheduleSave()}}
  else if(d.a=='theme'){document.documentElement.classList.toggle('day');theme()}
- else if(d.a=='vplay')vtog();else if(d.a=='clr')clearInk();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
+ else if(d.a=='vplay')vtog();else if(d.a=='music')musicDlg();else if(d.a=='clr')clearInk();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
  else if(d.a=='new')addSec(mkSec('تخته',[{h:2400}],'board'));
  else if(d.a=='copy'){const it=midItem();if(it.pdf&&!it.bg){toast('صفحه هنوز آماده نیست');return}if(!it.ink&&it.strokes.length)redrawInk(it);
   const c=mk(W,it.h),x=c.getContext('2d');x.fillStyle=(it.bg||it.img)?'#fff':TH.pp;x.fillRect(0,0,W,it.h);it.bg&&x.drawImage(it.bg,0,0);it.video&&x.drawImage(it.video,0,0,W,it.h);it.ink&&x.drawImage(it.ink,0,0);
@@ -98,7 +99,9 @@ async function render(it){it.busy=1;act++;try{const pg=await it.pdf.getPage(it.n
 const need=it=>{if(it.pdf&&!it.bg&&!it.busy&&act<2)render(it);if(!it.ink&&it.strokes.length)redrawInk(it)};
 async function sizeAll(s,doc){let p=0;for(let n=2;n<=doc.numPages;n++){const v=(await doc.getPage(n)).getViewport({scale:1}),h=Math.round(v.height*W/v.width),it=s.items[n-1];
  if(Math.abs(it.h-h)>1){it.h=h;it.ink=null;it.bg=null;p=1}if(n%25==0||n==doc.numPages){if(p){relayout(s);p=0}await new Promise(r=>setTimeout(r))}}}
-$('#fp').onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('در حال باز کردن کتاب…');
+$('#fp').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ if(/\.(pptx?|ppsx?|odp)$/i.test(f.name)){e.target.value='';await ask('مرورگر نمی‌تواند فایل پاورپوینت را مستقیم نمایش دهد. یک بار آن را به <b>PDF</b> تبدیل کن، بعد همین دکمه را بزن و PDF را انتخاب کن؛ هر اسلاید یک صفحه می‌شود.<br><small>پاورپوینت: File ← Export (یا Save as) ← PDF<br>گوشی: ⋯ ← Share/Export ← PDF<br>گوگل اسلایدز: File ← Download ← PDF</small>',['باشه']);return}
+toast('در حال باز کردن کتاب…');
  try{const buf=await f.arrayBuffer(),keep=buf.slice(0),doc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise,v=(await doc.getPage(1)).getViewport({scale:1}),h=Math.round(v.height*W/v.width);
   const s=mkSec('کتاب',Array.from({length:doc.numPages},(_,i)=>({pdf:doc,no:i+1,h})),'book');s.pdfId=Math.random().toString(36).slice(2);cput('pdf',{id:s.pdfId,data:keep});addSec(s);toast(doc.numPages+' صفحه؛ با کشیدن انگشت ورق بزن');sizeAll(s,doc)}catch{toast('فایل PDF باز نشد')}e.target.value=''};
 $('#fi').onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=await createImageBitmap(f),h=Math.round(W*b.height/b.width),c=mk(W,h);c.getContext('2d').drawImage(b,0,0,W,h);addSec(mkSec('عکس',[{h,bg:c,img:1}],'img'));e.target.value=''};
@@ -182,12 +185,54 @@ $('#rb').onclick=async()=>{if(rec){rec.stop();return}
  const mt=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
  const vs=cv.captureStream(24);vs.addTrack(dst.stream.getAudioTracks()[0]);chunks=[];const sid=Date.now().toString(36);let cn=0;
  rec=new MediaRecorder(vs,{mimeType:mt,videoBitsPerSecond:cvid()?2000000:850000,audioBitsPerSecond:96000});rec.ondataavailable=e=>{if(e.data.size){chunks.push(e.data);cput('rec',{id:sid+':'+String(cn++).padStart(6,'0'),sid,blob:e.data,mt})}};
- rec.onstop=()=>{const ext=mt.includes('mp4')?'mp4':'webm',a=document.createElement('a');a.href=URL.createObjectURL(new Blob(chunks,{type:mt.split(';')[0]}));a.download='clip-'+Date.now()+'.'+ext;a.click();recDone(sid);
-  aud.st.getTracks().forEach(t=>t.stop());aud.ac.close();clearInterval(tmr);rec=null;$('#rb').textContent='●';$('#ps').style.display=$('#tm').style.display='none';toast('ذخیره شد ('+ext.toUpperCase()+')')};
+ rec.onstop=()=>{const ext=mt.includes('mp4')?'mp4':'webm',a=document.createElement('a');lastClip={blob:new Blob(chunks,{type:mt.split(';')[0]})};a.href=URL.createObjectURL(lastClip.blob);a.download='clip-'+Date.now()+'.'+ext;a.click();recDone(sid);
+  aud.st.getTracks().forEach(t=>t.stop());aud.ac.close();clearInterval(tmr);rec=null;$('#rb').textContent='●';$('#ps').style.display=$('#tm').style.display='none';toast('ذخیره شد ('+ext.toUpperCase()+') — برای آهنگ: ▤ ← 🎵')};
  rec.start(1000);t0=Date.now();acc=0;{const v=cvid();if(v&&$('#va').checked){if(v.ended||v.currentTime>=v.duration-.05)v.currentTime=0;v.play().catch(()=>{})}}$('#rb').textContent='■';$('#ps').style.display=$('#tm').style.display='block';$('#ps').textContent='⏸';
  tmr=setInterval(()=>{if(rec.state=='recording')$('#tm').textContent=fmt(acc+(Date.now()-t0)/1000)},500);navigator.wakeLock?.request('screen').catch(()=>{})};
 $('#ps').onclick=()=>{if(rec.state=='recording'){rec.pause();cvid()?.pause();acc+=(Date.now()-t0)/1000;$('#ps').textContent='▶'}else{rec.resume();if($('#va').checked)cvid()?.play().catch(()=>{});t0=Date.now();$('#ps').textContent='⏸'}};
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+// ---- background music over a finished clip (clip + music are re-recorded together, real time)
+let lastClip=null;
+function mixMusic(clip,mus,vol,fade,say){let cancelled=false,stop=null;
+ const done=(async()=>{const ac=new AudioContext();await ac.resume().catch(()=>{});let buf;
+  try{buf=await ac.decodeAudioData(await mus.arrayBuffer())}catch{ac.close();throw new Error('این فایل آهنگ خوانده نشد؛ mp3 یا m4a امتحان کن')}
+  const v=document.createElement('video');v.playsInline=true;v.preload='auto';v.src=URL.createObjectURL(clip);
+  await new Promise((r,j)=>{v.onloadedmetadata=r;v.onerror=()=>j(new Error('این کلیپ باز نشد'))});
+  if(!isFinite(v.duration)){v.currentTime=1e7;await new Promise(r=>v.addEventListener('seeked',r,{once:true}))}
+  const dur=v.duration;if(v.currentTime!=0){v.currentTime=0;await new Promise(r=>v.addEventListener('seeked',r,{once:true}))}
+  const sc=Math.min(1,1280/v.videoWidth),w=Math.round(v.videoWidth*sc/2)*2,h=Math.round(v.videoHeight*sc/2)*2,c=mk(w,h),x=c.getContext('2d');
+  const dst=ac.createMediaStreamDestination(),vs=ac.createMediaElementSource(v);vs.connect(dst);
+  const ms=ac.createBufferSource();ms.buffer=buf;ms.loop=true;const mg=ac.createGain();mg.gain.value=0;ms.connect(mg);mg.connect(dst);
+  const st=c.captureStream(30);st.addTrack(dst.stream.getAudioTracks()[0]);
+  const mt=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t)),chunks=[];
+  const r=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:2500000,audioBitsPerSecond:128000});r.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  const stopped=new Promise(res=>r.onstop=res);let raf;
+  const frame=()=>{x.drawImage(v,0,0,w,h);const t=v.currentTime;say('در حال ساخت… '+mmss(t)+(isFinite(dur)?' / '+mmss(dur)+' ('+Math.round(100*t/dur)+'٪) — صفحه را باز نگه دار':''));raf=requestAnimationFrame(frame)};
+  navigator.wakeLock?.request('screen').catch(()=>{});
+  r.start(1000);await v.play();ms.start();const n=ac.currentTime;mg.gain.setValueAtTime(0,n);mg.gain.linearRampToValueAtTime(vol,n+1);
+  if(fade&&isFinite(dur)&&dur>6){mg.gain.setValueAtTime(vol,n+dur-3);mg.gain.linearRampToValueAtTime(0,n+dur)}
+  frame();await new Promise(res=>{v.onended=res;stop=()=>{v.pause();res()}});
+  cancelAnimationFrame(raf);r.stop();await stopped;try{ms.stop()}catch{}ac.close();URL.revokeObjectURL(v.src);
+  if(cancelled)throw new Error('لغو شد');
+  dlBlob(new Blob(chunks,{type:mt.split(';')[0]}),'clip-music-'+Date.now()+'.'+(mt.includes('mp4')?'mp4':'webm'))})();
+ return{done,cancel(){cancelled=true;stop&&stop()}}}
+function musicDlg(){if(rec){toast('اول ضبط را تمام کن');return}sh.classList.add('h');
+ const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:#000b;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px';
+ o.innerHTML=`<div class="pn" style="position:static;padding:16px;max-width:360px;width:100%;line-height:1.9;display:flex;flex-direction:column;gap:10px;font-size:14px;max-height:92%;overflow-y:auto;touch-action:pan-y"><b>🎵 آهنگ پس‌زمینه برای کلیپ</b>
+ <label class="b" style="display:block">🎬 <span id="mc">${lastClip?'آخرین کلیپ ضبط‌شده (برای تغییر بزن)':'انتخاب کلیپ'}</span><input type="file" accept="video/*" hidden id="mcf"></label>
+ <label class="b" style="display:block">🎵 <span id="mm">انتخاب آهنگ</span><input type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac" hidden id="mmf"></label>
+ <label>بلندی آهنگ: <input type="range" id="mvv" min="5" max="100" value="22" style="accent-color:var(--ac);width:100%"></label>
+ <label><input type="checkbox" id="mfd" checked> در ثانیه‌های آخر آهنگ آرام کم شود</label>
+ <div id="mst" style="min-height:22px;font-size:13px"></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="on" id="mgo">▶ شروع</button><button id="mx">بستن</button></div></div>`;
+ let clip=lastClip?lastClip.blob:null,mus=null,busy=null;const q=s=>o.querySelector(s);
+ q('#mcf').onchange=e=>{const f=e.target.files[0];if(f){clip=f;q('#mc').textContent=f.name}};
+ q('#mmf').onchange=e=>{const f=e.target.files[0];if(f){mus=f;q('#mm').textContent=f.name}};
+ q('#mx').onclick=()=>{if(busy)busy.cancel();o.remove()};
+ q('#mgo').onclick=async()=>{if(busy)return;if(!clip||!mus){q('#mst').textContent='اول کلیپ و آهنگ را انتخاب کن';return}
+  q('#mgo').disabled=true;q('#mst').textContent='در حال آماده‌سازی…';busy=mixMusic(clip,mus,q('#mvv').value/100,q('#mfd').checked,t=>q('#mst').textContent=t);
+  try{await busy.done;q('#mst').textContent='✅ تمام شد و ذخیره شد'}catch(err){q('#mst').textContent=err.message||'ناموفق بود'}busy=null;q('#mgo').disabled=false};
+ document.body.appendChild(o)}
 // ================= AUTOSAVE: project + unfinished-recording recovery =================
 let cdb=null,cready=false,svT=0;
 const cidb=()=>new Promise((res,rej)=>{const r=indexedDB.open('clipmaker',1);r.onupgradeneeded=()=>{['proj','pdf','rec'].forEach(n=>r.result.createObjectStore(n,{keyPath:'id'}))};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
