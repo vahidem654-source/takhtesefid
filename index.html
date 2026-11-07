@@ -36,7 +36,7 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 #cr{position:fixed;right:1px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:11px;color:var(--tx);opacity:.45;pointer-events:none;user-select:none;-webkit-user-select:none;z-index:1;white-space:nowrap;font-family:Vazirmatn,Tahoma,sans-serif}
 </style></head><body>
 <canvas id="c"></canvas><div id="cr">تهیه‌کننده: وحیده محجوب</div><video id="vid" playsinline muted style="position:fixed;width:2px;height:2px;opacity:0;pointer-events:none"></video>
-<div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
+<div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qh" title="نمایش لمس‌ها در کلیپ (بدون خط)">👆</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
 <div id="bar" class="pn"></div>
 <div id="sh" class="pn h">
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
@@ -47,6 +47,7 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
  <div class="r"><button data-a="copy">⇄ صفحه‌ی وسط صفحه‌نمایش ← تخته‌ی جدید</button></div>
  <div class="r"><label>نوشتن با:
   <select id="md"><option value="two">خودکار/انگشت — اسکرول با دو انگشت</option><option value="auto">تشخیص با اندازه‌ی لمس — اسکرول با یک انگشت</option><option value="pen">فقط استایلوس فعال</option></select></label><button data-a="cal">کالیبره</button></div>
+ <div class="r"><label><input type="checkbox" id="tc"> نمایش لمس‌ها و حرکت انگشت در کلیپ (بدون کشیدن خط؛ دکمه‌ی 👆 کنار صفحه هم همین است)</label></div>
  <div class="r"><label><input type="checkbox" id="cm"> دوربین (چهره)</label><label>نرمی صدا: <select id="sf"><option value="0">طبیعی</option><option value="3">ملایم</option><option value="6">نرم‌تر</option></select></label></div>
 </div>
 <div id="cd"></div><div id="ts"></div>
@@ -163,12 +164,25 @@ cv.onpointerup=cv.onpointercancel=e=>{if(drawing){if(e.pointerId==drawing.id){co
   it.strokes.push(live);it.redo=[];s.hist.push(it);s.rhist=[];live=null;drawing=null;dirty=1;scheduleSave()}return}
  ptr.delete(e.pointerId);if(!ptr.size&&vel&&performance.now()-vel.t<80)fling();g0=gest();if(!ptr.size)vel=null};
 cv.oncontextmenu=e=>e.preventDefault();
+// ---- touch indicators: show touches/gestures in the recorded video (never drawn as ink)
+let TOUCH=0;try{TOUCH=+localStorage.cm_tc||0}catch{}
+const tpm=new Map(),taps=[];
+function setTouch(v){TOUCH=v?1:0;try{localStorage.cm_tc=TOUCH}catch{}$('#tc').checked=!!TOUCH;const b=$('#qh');b.style.background=TOUCH?'var(--ac)':'var(--pn)';b.style.color=TOUCH?'#06201b':'inherit';if(!TOUCH){tpm.clear();taps.length=0}dirty=1}
+$('#tc').onchange=e=>setTouch(e.target.checked);$('#qh').onclick=()=>setTouch(!TOUCH);setTouch(TOUCH);
+cv.addEventListener('pointerdown',e=>{if(!TOUCH)return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};tpm.set(e.pointerId,{...p,tr:[{...p,t:n}]});taps.push({...p,t:n});dirty=1},true);
+cv.addEventListener('pointermove',e=>{const o=tpm.get(e.pointerId);if(!o)return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};o.x=p.x;o.y=p.y;o.tr.push({...p,t:n});while(o.tr.length&&n-o.tr[0].t>450)o.tr.shift();dirty=1},true);
+const tpUp=e=>{if(tpm.delete(e.pointerId))dirty=1};cv.addEventListener('pointerup',tpUp,true);cv.addEventListener('pointercancel',tpUp,true);
+function paintTouches(){if(!TOUCH||(!tpm.size&&!taps.length))return;const n=performance.now(),r0=k*20;
+ for(const o of tpm.values()){if(o.tr.length>1){cx.save();cx.lineCap='round';for(let i=1;i<o.tr.length;i++){const a=o.tr[i-1],b=o.tr[i],al=Math.max(0,1-(n-b.t)/450);cx.strokeStyle=`rgba(255,255,255,${.4*al})`;cx.lineWidth=r0*.9*al+1;cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke()}cx.restore()}
+  cx.save();cx.beginPath();cx.arc(o.x,o.y,r0,0,7);cx.fillStyle='rgba(255,255,255,.35)';cx.fill();cx.lineWidth=r0*.14;cx.strokeStyle='rgba(53,224,194,.95)';cx.stroke();cx.restore()}
+ for(let i=taps.length-1;i>=0;i--){const a=taps[i],age=(n-a.t)/600;if(age>=1){taps.splice(i,1);continue}cx.save();cx.beginPath();cx.arc(a.x,a.y,r0*(1+age*1.6),0,7);cx.lineWidth=r0*.14;cx.strokeStyle=`rgba(53,224,194,${.9*(1-age)})`;cx.stroke();cx.restore()}
+ dirty=1}
 function draw(){dirty=0;cx.setTransform(1,0,0,1,0,0);cx.fillStyle=TH.bg;cx.fillRect(0,0,cv.width,cv.height);const s=secs[cur];if(!s)return;
  cx.setTransform(k*V.s,0,0,k*V.s,k*V.x,k*V.y);const y0=-V.y/V.s,y1=y0+innerHeight/V.s;
  for(const it of s.items){if(it.y+it.h<y0||it.y>y1)continue;need(it);cx.fillStyle=it.video?'#000':(it.pdf||it.bg)?'#fff':TH.pp;cx.fillRect(0,it.y,W,it.h);it.bg&&cx.drawImage(it.bg,0,it.y);it.video&&it.video.readyState>1&&cx.drawImage(it.video,0,it.y,W,it.h);it.ink&&cx.drawImage(it.ink,0,it.y);
   if(live&&live.it===it&&live.tool!='pen'&&live.tool!='eraser'){cx.save();cx.translate(0,it.y);paint(cx,live);cx.restore()}}
  const c=s.items.indexOf(itemAt(s,(innerHeight/2-V.y)/V.s));if(c!==pi){pi=c;$('#lab').textContent=s.items.length>1?'صفحه '+(c+1)+' از '+s.items.length:s.name;$('#sl').max=s.items.length;$('#sl').value=c+1}
- cx.setTransform(1,0,0,1,0,0);
+ cx.setTransform(1,0,0,1,0,0);paintTouches();
  if(cam.on&&vid.videoWidth){const r=k*48,x=cv.width-r-k*12,y=r+k*12,m=Math.min(vid.videoWidth,vid.videoHeight);cx.save();cx.beginPath();cx.arc(x,y,r,0,7);cx.clip();
   cx.drawImage(vid,(vid.videoWidth-m)/2,(vid.videoHeight-m)/2,m,m,x-r,y-r,2*r,2*r);cx.restore();cx.lineWidth=k*3;cx.strokeStyle='#35e0c2';cx.beginPath();cx.arc(x,y,r,0,7);cx.stroke()}}
 (function loop(){(dirty||rec||cam.on||(cvid()&&!cvid().paused))&&draw();requestAnimationFrame(loop)})();
