@@ -59,7 +59,7 @@ let secs=[],cur=0,act=0,pi=-1,vel=null,cal=null,S={tool:'pen',color:'#35e0c2',w:
 const ptr=new Map(),mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
 const toast=t=>{const e=$('#ts');e.textContent=t;e.style.opacity=1;clearTimeout(e.t);e.t=setTimeout(()=>e.style.opacity=0,2200)};
 // ---- toolbar
-const T=[['pen','✎','قلم'],['hl','▮','هایلایت'],['eraser','⌫','پاک‌کن'],['line','╱','خط'],['rect','▭','مربع'],['circ','◯','دایره'],['tri','△','مثلث'],['hand','✋','حرکت (قلم غیرفعال)']];
+const T=[['pen','✎','قلم'],['hl','▮','هایلایت'],['eraser','⌫','پاک‌کن'],['line','╱','خط'],['rect','▭','مربع'],['circ','◯','دایره'],['tri','△','مثلث'],['hand','✋','حرکت (قلم غیرفعال)'],['point','👆','فقط نشان‌دادن لمس (بدون خط، بدون جابه‌جایی)']];
 bar.innerHTML='<div id="tabs"></div>'+T.map(([a,i,t])=>`<button class="t" data-k="${a}" title="${t}">${i}</button>`).join('')+'<input type="color" id="col" value="#35e0c2">'+
 ['#35e0c2','#ff5c7a','#ffd166','#6c8bff','#ffffff','#172033'].map(c=>`<button class="sw" style="background:${c}" data-c="${c}"></button>`).join('')+
 '<input type="range" id="wd" min="1" max="30" value="4"><button class="t" data-a="undo">↶</button><button class="t" data-a="redo">↷</button><button class="t" data-a="theme">◐</button><button class="t" data-a="sheet">▤</button>';
@@ -144,11 +144,11 @@ function clearInk(){const s=secs[cur],it=itemAt(s,(innerHeight/2-V.y)/V.s),l=it.
 const pt=(e,it)=>({x:(e.clientX-V.x)/V.s,y:(e.clientY-V.y)/V.s-it.y});
 function gest(){const a=[...ptr.values()];if(!a.length)return null;const t=performance.now();if(a.length==1)return{x:a[0].x,y:a[0].y,d:0,n:1,t};const[p,q]=a;return{x:(p.x+q.x)/2,y:(p.y+q.y)/2,d:Math.hypot(p.x-q.x,p.y-q.y),n:2,t}}
 // which touches write? pen/mouse always; finger/capacitive pen depends on mode
-function inkable(e){if(S.tool=='hand')return false;if(e.pointerType!='touch')return true;if(S.mode=='two')return true;return S.mode=='auto'&&S.th!=null&&Math.max(e.width,e.height)<=S.th}
+function inkable(e){if(S.tool=='hand'||S.tool=='point')return false;if(e.pointerType!='touch')return true;if(S.mode=='two')return true;return S.mode=='auto'&&S.th!=null&&Math.max(e.width,e.height)<=S.th}
 function calib(){const st=[];toast('یک بار با نوک خودکار روی صفحه بزن');sh.classList.add('h');cal=e=>{if(e.pointerType!='touch'){toast('قلم شما نوع استایلوس است؛ نیازی به کالیبره نیست');cal=null;return}
  st.push(Math.max(e.width,e.height));if(st.length==1)toast('حالا با انگشت بزن');else{cal=null;const[p,f]=st;if(f-p>=1.5){S.th=(p+f)/2;S.mode='auto';$('#md').value='auto';saveS();toast('انجام شد: خودکار می‌نویسد، انگشت اسکرول می‌کند')}else toast('این گوشی اندازه‌ی لمس را گزارش نمی‌کند؛ حالت «دو انگشتی» را نگه دار')}}}
 function abortDraw(){const it=live.it;live=null;drawing=null;redrawInk(it)}
-cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);if(cal)return cal(e);const s=secs[cur];if(!s)return;const touch=e.pointerType=='touch',pos={x:e.clientX,y:e.clientY};
+cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);if(cal)return cal(e);const s=secs[cur];if(!s)return;if(S.tool=='point'){e.preventDefault();return}const touch=e.pointerType=='touch',pos={x:e.clientX,y:e.clientY};
  if(drawing){if(touch&&drawing.touch&&S.mode=='two'){const d=drawing;abortDraw();ptr.set(d.id,d.pos);ptr.set(e.pointerId,pos);g0=gest()}return}
  if(inkable(e)){const it=itemAt(s,(e.clientY-V.y)/V.s);if(!it.ink)redrawInk(it);drawing={id:e.pointerId,touch,pos};live={tool:S.tool,color:S.color,w:S.w,it,pts:[pt(e,it)]};ptr.clear();
   if(!rec)bar.classList.add('h');sh.classList.add('h');dirty=1;return}
@@ -169,10 +169,10 @@ let TOUCH=0;try{TOUCH=+localStorage.cm_tc||0}catch{}
 const tpm=new Map(),taps=[];
 function setTouch(v){TOUCH=v?1:0;try{localStorage.cm_tc=TOUCH}catch{}$('#tc').checked=!!TOUCH;const b=$('#qh');b.style.background=TOUCH?'var(--ac)':'var(--pn)';b.style.color=TOUCH?'#06201b':'inherit';if(!TOUCH){tpm.clear();taps.length=0}dirty=1}
 $('#tc').onchange=e=>setTouch(e.target.checked);$('#qh').onclick=()=>setTouch(!TOUCH);setTouch(TOUCH);
-cv.addEventListener('pointerdown',e=>{if(!TOUCH)return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};tpm.set(e.pointerId,{...p,tr:[{...p,t:n}]});taps.push({...p,t:n});dirty=1},true);
+cv.addEventListener('pointerdown',e=>{if(!TOUCH&&S.tool!='point')return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};tpm.set(e.pointerId,{...p,tr:[{...p,t:n}]});taps.push({...p,t:n});dirty=1},true);
 cv.addEventListener('pointermove',e=>{const o=tpm.get(e.pointerId);if(!o)return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};o.x=p.x;o.y=p.y;o.tr.push({...p,t:n});while(o.tr.length&&n-o.tr[0].t>450)o.tr.shift();dirty=1},true);
 const tpUp=e=>{if(tpm.delete(e.pointerId))dirty=1};cv.addEventListener('pointerup',tpUp,true);cv.addEventListener('pointercancel',tpUp,true);
-function paintTouches(){if(!TOUCH||(!tpm.size&&!taps.length))return;const n=performance.now(),r0=k*20;
+function paintTouches(){if(!(TOUCH||S.tool=='point')||(!tpm.size&&!taps.length))return;const n=performance.now(),r0=k*20;
  for(const o of tpm.values()){if(o.tr.length>1){cx.save();cx.lineCap='round';for(let i=1;i<o.tr.length;i++){const a=o.tr[i-1],b=o.tr[i],al=Math.max(0,1-(n-b.t)/450);cx.strokeStyle=`rgba(255,255,255,${.4*al})`;cx.lineWidth=r0*.9*al+1;cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke()}cx.restore()}
   cx.save();cx.beginPath();cx.arc(o.x,o.y,r0,0,7);cx.fillStyle='rgba(255,255,255,.35)';cx.fill();cx.lineWidth=r0*.14;cx.strokeStyle='rgba(53,224,194,.95)';cx.stroke();cx.restore()}
  for(let i=taps.length-1;i>=0;i--){const a=taps[i],age=(n-a.t)/600;if(age>=1){taps.splice(i,1);continue}cx.save();cx.beginPath();cx.arc(a.x,a.y,r0*(1+age*1.6),0,7);cx.lineWidth=r0*.14;cx.strokeStyle=`rgba(53,224,194,${.9*(1-age)})`;cx.stroke();cx.restore()}
