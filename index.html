@@ -36,7 +36,7 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 <canvas id="c"></canvas><div id="cr">تهیه‌کننده: وحیده محجوب</div><video id="vid" playsinline muted style="position:fixed;width:2px;height:2px;opacity:0;pointer-events:none"></video>
 <div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qh" title="نمایش لمس‌ها در کلیپ (بدون خط)">👆</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
 <div id="bar" class="pn"></div>
-<div id="sh" class="pn h">
+<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۹</div>
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
   <div class="r"><label class="b p">📕 کتاب / پاورپوینت<input type="file" accept="application/pdf,.pdf,.ppt,.pptx,.pps,.ppsx,.odp" hidden id="fp"></label><label class="b">🖼 عکس<input type="file" accept="image/*" hidden id="fi"></label><label class="b p">🎞 ویدیو<input type="file" accept="video/*" hidden id="fv"></label><button data-a="new">＋ تخته</button><button data-a="fit">اندازه‌ی صفحه</button></div>
  <div class="r" id="vr" style="display:none"><button data-a="vplay">▶</button><input type="range" id="vs" min="0" max="1" step="0.1" value="0" style="flex:1;min-width:100px;accent-color:var(--ac)"><span id="vt" style="font-size:12px">0:00</span></div>
@@ -49,10 +49,15 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
  <div class="r"><label><input type="checkbox" id="cm"> دوربین (چهره)</label><label>نرمی صدا: <select id="sf"><option value="0">طبیعی</option><option value="3">ملایم</option><option value="6">نرم‌تر</option></select></label></div>
 </div>
 <div id="cd"></div><div id="ts"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="jszip.min.js"></script><script>if(typeof JSZip=="undefined"){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"><\/script>')}</script><script src="pptx.js"></script>
 <script>
 const $=s=>document.querySelector(s),cv=$('#c'),cx=cv.getContext('2d'),W=1400,GAP=14,bar=$('#bar'),sh=$('#sh'),vid=$('#vid');
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let _pj=null;
+async function openDoc(buf,type){buf=new Uint8Array(buf);
+ if(type=='pptx'){if(!window.PPTX||typeof JSZip=='undefined')throw new Error('lib');const d=await PPTX.load(buf.buffer.slice(buf.byteOffset,buf.byteOffset+buf.byteLength));if(!d.slides.length)throw new Error('empty');
+  return{numPages:d.slides.length,getPage:async n=>({getViewport:({scale})=>({width:1000*scale,height:1000*scale*d.h/d.w}),render:({canvasContext:g,viewport:v})=>({promise:d.render(n-1,g.canvas,v.width)})})}}
+ if(!_pj){_pj=await import('./pdf.min.mjs');_pj.GlobalWorkerOptions.workerSrc='./pdf.worker.min.mjs'}
+ return _pj.getDocument({data:buf}).promise}
 let secs=[],cur=0,act=0,pi=-1,vel=null,cal=null,S={tool:'pen',color:'#35e0c2',w:4,mode:'two',th:null},V={s:1,x:0,y:0},dirty=1,rec=null,live=null,drawing=null,g0=null,TH={},cam={on:0},k=1;
 const ptr=new Map(),mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
 const toast=t=>{const e=$('#ts');e.textContent=t;e.style.opacity=1;clearTimeout(e.t);e.t=setTimeout(()=>e.style.opacity=0,2200)};
@@ -61,6 +66,7 @@ const T=[['pen','✎','قلم'],['hl','▮','هایلایت'],['eraser','⌫','�
 bar.innerHTML='<div id="tabs"></div>'+T.map(([a,i,t])=>`<button class="t" data-k="${a}" title="${t}">${i}</button>`).join('')+'<input type="color" id="col" value="#35e0c2">'+
 ['#35e0c2','#ff5c7a','#ffd166','#6c8bff','#ffffff','#172033'].map(c=>`<button class="sw" style="background:${c}" data-c="${c}"></button>`).join('')+
 '<input type="range" id="wd" min="1" max="30" value="4"><button class="t" data-a="undo">↶</button><button class="t" data-a="redo">↷</button><button class="t" data-a="theme">◐</button><button class="t" data-a="sheet">▤</button>'+'<div class="ts"><span>👆 لمس</span><input type="color" id="tcl" value="#35e0c2" title="رنگ نشانگر لمس"><input type="range" id="tsz" min="8" max="60" value="20" style="width:100%;accent-color:var(--ac)" title="اندازه‌ی نشانگر لمس"></div>';
+bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۹</div>');
 const icon={board:'⬜',book:'📕',img:'🖼',vid:'🎞'};
 const nm={board:'تخته',book:'کتاب',img:'عکس',vid:'ویدیو'};
 function ui(){const q=$('#qt');if(q){const h=S.tool=='hand';q.textContent=h?'✋':'✎';q.style.background=h?'var(--ac)':'var(--pn)';q.style.color=h?'#06201b':'inherit'}bar.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k==S.tool));pi=-1;vui();const n={};
@@ -99,10 +105,11 @@ const need=it=>{if(it.pdf&&!it.bg&&!it.busy&&act<2)render(it);if(!it.ink&&it.str
 async function sizeAll(s,doc){let p=0;for(let n=2;n<=doc.numPages;n++){const v=(await doc.getPage(n)).getViewport({scale:1}),h=Math.round(v.height*W/v.width),it=s.items[n-1];
  if(Math.abs(it.h-h)>1){it.h=h;it.ink=null;it.bg=null;p=1}if(n%25==0||n==doc.numPages){if(p){relayout(s);p=0}await new Promise(r=>setTimeout(r))}}}
 $('#fp').onchange=async e=>{const f=e.target.files[0];if(!f)return;
- if(/\.(pptx?|ppsx?|odp)$/i.test(f.name)){e.target.value='';await ask('مرورگر نمی‌تواند فایل پاورپوینت را مستقیم نمایش دهد. یک بار آن را به <b>PDF</b> تبدیل کن، بعد همین دکمه را بزن و PDF را انتخاب کن؛ هر اسلاید یک صفحه می‌شود.<br><small>پاورپوینت: File ← Export (یا Save as) ← PDF<br>گوشی: ⋯ ← Share/Export ← PDF<br>گوگل اسلایدز: File ← Download ← PDF</small>',['باشه']);return}
+ const isP=/\.(pptx|ppsx)$/i.test(f.name);
+ if(/\.(ppt|pps|odp)$/i.test(f.name)){e.target.value='';await ask('مرورگر نمی‌تواند فایل پاورپوینت را مستقیم نمایش دهد. یک بار آن را به <b>PDF</b> تبدیل کن، بعد همین دکمه را بزن و PDF را انتخاب کن؛ هر اسلاید یک صفحه می‌شود.<br><small>پاورپوینت: File ← Export (یا Save as) ← PDF<br>گوشی: ⋯ ← Share/Export ← PDF<br>گوگل اسلایدز: File ← Download ← PDF</small>',['باشه']);return}
 toast('در حال باز کردن کتاب…');
- try{const buf=await f.arrayBuffer(),keep=buf.slice(0),doc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise,v=(await doc.getPage(1)).getViewport({scale:1}),h=Math.round(v.height*W/v.width);
-  const s=mkSec('کتاب',Array.from({length:doc.numPages},(_,i)=>({pdf:doc,no:i+1,h})),'book');s.pdfId=Math.random().toString(36).slice(2);cput('pdf',{id:s.pdfId,data:keep});addSec(s);toast(doc.numPages+' صفحه؛ با کشیدن انگشت ورق بزن');sizeAll(s,doc)}catch{toast('فایل PDF باز نشد')}e.target.value=''};
+ try{const buf=await f.arrayBuffer(),keep=buf.slice(0),doc=await openDoc(buf.slice(0),isP?'pptx':'pdf'),v=(await doc.getPage(1)).getViewport({scale:1}),h=Math.round(v.height*W/v.width);
+  const s=mkSec('کتاب',Array.from({length:doc.numPages},(_,i)=>({pdf:doc,no:i+1,h})),'book');s.pdfId=Math.random().toString(36).slice(2);s.pt=isP?'pptx':'pdf';cput('pdf',{id:s.pdfId,data:keep,pt:s.pt});addSec(s);toast(doc.numPages+' صفحه؛ با کشیدن انگشت ورق بزن');sizeAll(s,doc)}catch{toast(isP?'فایل پاورپوینت باز نشد؛ فایل‌های pptx.js و jszip.min.js کنار index.html باشند':'فایل PDF باز نشد')}e.target.value=''};
 $('#fi').onchange=async e=>{const f=e.target.files[0];if(!f)return;const b=await createImageBitmap(f),h=Math.round(W*b.height/b.width),c=mk(W,h);c.getContext('2d').drawImage(b,0,0,W,h);addSec(mkSec('عکس',[{h,bg:c,img:1}],'img'));e.target.value=''};
 setInterval(()=>{const s=secs[cur];if(!s||s.items.length<2)return;const m=innerHeight*3/V.s,c=(innerHeight/2-V.y)/V.s;for(const it of s.items)if(Math.abs(it.y+it.h/2-c)>m){if(it.pdf)it.bg=null;it.ink=null}},2500);
 // ---- video sections (load a clip, play it on the canvas, record voice-over)
@@ -258,7 +265,7 @@ const scheduleSave=()=>{clearTimeout(svT);svT=setTimeout(saveNow,1500)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveNow()});addEventListener('pagehide',saveNow);
 async function restoreProject(P){const out=[];
  for(const q of P.secs){let items;
-  if(q.kind=='book'){const r=q.pdf&&await cget('pdf',q.pdf);if(!r)continue;const doc=await pdfjsLib.getDocument({data:new Uint8Array(r.data.slice(0))}).promise;items=q.items.map((i,n)=>({pdf:doc,no:i.no||n+1,h:i.h}))}
+  if(q.kind=='book'){const r=q.pdf&&await cget('pdf',q.pdf);if(!r)continue;const doc=await openDoc(r.data.slice(0),r.pt||'pdf');items=q.items.map((i,n)=>({pdf:doc,no:i.no||n+1,h:i.h}))}
   else if(q.kind=='vid'){const r=q.pdf&&await cget('pdf',q.pdf);if(!r)continue;try{items=[await mkVid(r.data)]}catch{continue}}
   else items=await Promise.all(q.items.map(async i=>{const o={h:i.h};if(i.img){const im=new Image();await new Promise(r=>{im.onload=r;im.onerror=r;im.src=i.img});const c=mk(W,i.h);c.getContext('2d').drawImage(im,0,0,W,i.h);o.bg=c;o.img=1;o.bgUrl=i.img}return o}));
   const s=mkSec(q.name,items,q.kind);s.pdfId=q.pdf;q.items.forEach((i,n)=>{s.items[n].strokes=i.strokes});s.V=q.V;out.push(s);
