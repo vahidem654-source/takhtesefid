@@ -36,7 +36,7 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 <canvas id="c"></canvas><div id="cr">تهیه‌کننده: وحیده محجوب</div><video id="vid" playsinline muted style="position:fixed;width:2px;height:2px;opacity:0;pointer-events:none"></video>
 <div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qh" title="نمایش لمس‌ها در کلیپ (بدون خط)">👆</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
 <div id="bar" class="pn"></div>
-<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۹</div>
+<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۱۰</div><select id="pal" style="width:100%;margin-bottom:6px"></select>
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
   <div class="r"><label class="b p">📕 کتاب / پاورپوینت<input type="file" accept="application/pdf,.pdf,.ppt,.pptx,.pps,.ppsx,.odp" hidden id="fp"></label><label class="b">🖼 عکس<input type="file" accept="image/*" hidden id="fi"></label><label class="b p">🎞 ویدیو<input type="file" accept="video/*" hidden id="fv"></label><button data-a="new">＋ تخته</button><button data-a="fit">اندازه‌ی صفحه</button></div>
  <div class="r" id="vr" style="display:none"><button data-a="vplay">▶</button><input type="range" id="vs" min="0" max="1" step="0.1" value="0" style="flex:1;min-width:100px;accent-color:var(--ac)"><span id="vt" style="font-size:12px">0:00</span></div>
@@ -65,8 +65,8 @@ const toast=t=>{const e=$('#ts');e.textContent=t;e.style.opacity=1;clearTimeout(
 const T=[['pen','✎','قلم'],['hl','▮','هایلایت'],['eraser','⌫','پاک‌کن'],['line','╱','خط'],['rect','▭','مربع'],['circ','◯','دایره'],['tri','△','مثلث'],['hand','✋','حرکت (قلم غیرفعال)'],['point','👆','فقط نشان‌دادن لمس (بدون خط، بدون جابه‌جایی)']];
 bar.innerHTML='<div id="tabs"></div>'+T.map(([a,i,t])=>`<button class="t" data-k="${a}" title="${t}">${i}</button>`).join('')+'<input type="color" id="col" value="#35e0c2">'+
 ['#35e0c2','#ff5c7a','#ffd166','#6c8bff','#ffffff','#172033'].map(c=>`<button class="sw" style="background:${c}" data-c="${c}"></button>`).join('')+
-'<input type="range" id="wd" min="1" max="30" value="4"><button class="t" data-a="undo">↶</button><button class="t" data-a="redo">↷</button><button class="t" data-a="theme">◐</button><button class="t" data-a="sheet">▤</button>'+'<div class="ts"><span>👆 لمس</span><input type="color" id="tcl" value="#35e0c2" title="رنگ نشانگر لمس"><input type="range" id="tsz" min="8" max="60" value="20" style="width:100%;accent-color:var(--ac)" title="اندازه‌ی نشانگر لمس"></div>';
-bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۹</div>');
+'<input type="range" id="wd" min="1" max="30" value="4"><button class="t" data-a="undo">↶</button><button class="t" data-a="redo">↷</button><button class="t" data-a="theme">◐</button><button class="t" data-a="pal">🎨</button><button class="t" data-a="sheet">▤</button>'+'<div class="ts"><span>👆 لمس</span><input type="color" id="tcl" value="#35e0c2" title="رنگ نشانگر لمس"><input type="range" id="tsz" min="8" max="60" value="20" style="width:100%;accent-color:var(--ac)" title="اندازه‌ی نشانگر لمس"></div>';
+bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۱۰</div>');
 const icon={board:'⬜',book:'📕',img:'🖼',vid:'🎞'};
 const nm={board:'تخته',book:'کتاب',img:'عکس',vid:'ویدیو'};
 function ui(){const q=$('#qt');if(q){const h=S.tool=='hand';q.textContent=h?'✋':'✎';q.style.background=h?'var(--ac)':'var(--pn)';q.style.color=h?'#06201b':'inherit'}bar.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k==S.tool));pi=-1;vui();const n={};
@@ -74,10 +74,26 @@ function ui(){const q=$('#qt');if(q){const h=S.tool=='hand';q.textContent=h?'✋
  $('#tabs .on')?.scrollIntoView({inline:'center',block:'nearest'})}
 function theme(){const r=document.documentElement,g=getComputedStyle(r);TH.bg=g.getPropertyValue('--bg').trim();TH.pp=g.getPropertyValue('--pp').trim();$('meta[name=theme-color]').content=TH.bg;dirty=1}
 const midItem=()=>itemAt(secs[cur],(innerHeight/2-V.y)/V.s);
+const PAL=[['پیش‌فرض',null],
+['اقیانوس',{bg:'#e3f0f7',card:'#f6fbff',ink:'#12384d',acc:'#1b7fa8',line:'#b9d6e5'}],
+['جنگل',{bg:'#e6f0e4',card:'#f6fbf3',ink:'#23382a',acc:'#3f8a4f',line:'#bfd6bd'}],
+['بنفشه',{bg:'#efe8f7',card:'#fbf8ff',ink:'#35224d',acc:'#7b4fb8',line:'#d3c4e8'}],
+['گل‌سرخ',{bg:'#fbe8ee',card:'#fff7fa',ink:'#4d2233',acc:'#c23b6d',line:'#efc3d2'}],
+['غروب',{bg:'#fdeadb',card:'#fff8f1',ink:'#4a2a14',acc:'#e0642a',line:'#f0cdb3'}],
+['شب آبی',{bg:'#0e1320',card:'#171e30',ink:'#e8ecf6',acc:'#35e0c2',line:'#2a3350',d:1}],
+['زغال',{bg:'#1b1b1d',card:'#26262a',ink:'#ececec',acc:'#f5b942',line:'#3a3a40',d:1}],
+['شب بنفش',{bg:'#1a1326',card:'#251b36',ink:'#efe6fb',acc:'#b58cff',line:'#3d2e57',d:1}]];
+function applyPal(n){const r=document.documentElement,t=PAL[n]&&PAL[n][1];['--bg','--pn','--tx','--ac','--ln'].forEach(v=>r.style.removeProperty(v));
+ if(t){r.style.setProperty('--bg',t.bg);r.style.setProperty('--pn',t.card);r.style.setProperty('--tx',t.ink);r.style.setProperty('--ac',t.acc);r.style.setProperty('--ln',t.line)}
+ try{theme()}catch(e){}}
+let palN=0;try{palN=+localStorage.getItem('cm_pal')||0}catch(e){}if(palN>=PAL.length)palN=0;
+function palInit(){const x=document.getElementById('pal');if(x){PAL.forEach((p,j)=>{const o=document.createElement('option');o.value=j;o.textContent='🎨 '+p[0];x.append(o)});x.value=palN;x.onchange=()=>palSet(+x.value)}applyPal(palN)}
+function palSet(n){palN=n;applyPal(n);try{localStorage.setItem('cm_pal',n)}catch(e){}const x=document.getElementById('pal');if(x)x.value=n}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
  if(d.k){if(d.k!='hand')S.last=d.k;S.tool=d.k;ui()}else if(d.c){S.color=d.c;$('#col').value=d.c}else if(d.g)go(+d.g);
  else if(d.a=='undo'){const s=secs[cur],it=s.hist.pop();if(it){s.rhist.push(it);it.redo.push(it.strokes.pop());redrawInk(it);scheduleSave()}}
  else if(d.a=='redo'){const s=secs[cur],it=s.rhist.pop();if(it){s.hist.push(it);it.strokes.push(it.redo.pop());redrawInk(it);scheduleSave()}}
+ else if(d.a=='pal'){palSet((palN+1)%PAL.length);toast('رنگ‌بندی: '+PAL[palN][0])}
  else if(d.a=='theme'){document.documentElement.classList.toggle('day');theme()}
  else if(d.a=='vplay')vtog();else if(d.a=='music')musicDlg();else if(d.a=='clr')clearInk();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
  else if(d.a=='new')addSec(mkSec('تخته',[{h:2400}],'board'));
@@ -281,7 +297,7 @@ async function recoverRecordings(){const l=await call('rec');if(!l.length)return
   const c=await ask(`ضبطی از دفعه‌ی قبل ناتمام مانده است (حدود ${mb.toFixed(1)} مگابایت). ذخیره‌اش کنم؟`,['💾 ذخیره‌ی ویدیو','🗑 حذف']);
   if(c==0)dlBlob(new Blob(ch.map(x=>x.blob),{type:mt}),'clip-recovered-'+sid+'.'+ext);ch.forEach(x=>cdel('rec',x.id))}}
 (async()=>{try{cdb=await cidb()}catch{cdb=null}
- theme();resize();let P=await cget('proj','main'),sec=null;
+ try{palInit()}catch(e){}theme();resize();let P=await cget('proj','main'),sec=null;
  const has=P&&P.secs&&P.secs.some(q=>q.kind!='board'||q.items.some(i=>i.strokes.length||i.img));
  if(has){const c=await ask(`کار قبلی پیدا شد (${String(P.secs.length).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])} بخش). ادامه بدهیم؟`,['▶ ادامه‌ی کار قبلی','🆕 شروع تازه']);
   if(c==0){try{sec=await restoreProject(P)}catch{sec=null;toast('بازیابی کامل نشد')}}
