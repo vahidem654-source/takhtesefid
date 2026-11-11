@@ -36,12 +36,17 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 <canvas id="c"></canvas><div id="cr">تهیه‌کننده: وحیده محجوب</div><video id="vid" playsinline muted style="position:fixed;width:2px;height:2px;opacity:0;pointer-events:none"></video>
 <div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qh" title="نمایش لمس‌ها در کلیپ (بدون خط)">👆</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
 <div id="bar" class="pn"></div>
-<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۱۲</div><select id="pal" style="width:100%;margin-bottom:6px"></select>
+<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۱۴</div><select id="pal" style="width:100%;margin-bottom:6px"></select>
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
   <div class="r"><label class="b p">📕 کتاب / پاورپوینت<input type="file" accept="application/pdf,.pdf,.ppt,.pptx,.pps,.ppsx,.odp" hidden id="fp"></label><label class="b">🖼 عکس<input type="file" accept="image/*" hidden id="fi"></label><label class="b p">🎞 ویدیو<input type="file" accept="video/*" hidden id="fv"></label><button data-a="new">＋ تخته</button><button data-a="fit">اندازه‌ی صفحه</button></div>
  <div class="r" id="vr" style="display:none"><button data-a="vplay">▶</button><input type="range" id="vs" min="0" max="1" step="0.1" value="0" style="flex:1;min-width:100px;accent-color:var(--ac)"><span id="vt" style="font-size:12px">0:00</span></div>
  <div class="r" id="vo" style="display:none;flex-direction:column;align-items:flex-start"><label><input type="checkbox" id="va" checked> با شروع ضبط، ویدیو هم خودکار پخش شود</label><label><input type="checkbox" id="ve" checked> با تمام شدن ویدیو، ضبط هم تمام شود</label></div>
  <div class="r"><button data-a="music">🎵 آهنگ پس‌زمینه روی کلیپ…</button></div>
+ <div class="r"><button data-a="autoclip">🎞 ساخت کلیپ خودکار از صفحه‌ها (بی‌صدا)…</button></div>
+ <div class="r"><button data-a="ovbox">🅰 متن و تصویر روی صفحه (با انیمیشن)…</button></div>
+ <div class="r"><button data-a="aiwiz">🪄 ساخت ارائه با هوش مصنوعی…</button></div>
+ <div class="r"><button data-a="pdfimg">🖼 دیدن و گرفتن تصویرهای داخل PDF / پاورپوینت…</button></div>
+ <div class="r"><button data-a="topptx">📤 ساخت PowerPoint از این فایل (هر صفحه یک اسلاید)</button></div>
  <div class="r"><button data-a="copy">⇄ صفحه‌ی وسط صفحه‌نمایش ← تخته‌ی جدید</button></div>
  <div class="r"><label>نوشتن با:
   <select id="md"><option value="two">خودکار/انگشت — اسکرول با دو انگشت</option><option value="auto">تشخیص با اندازه‌ی لمس — اسکرول با یک انگشت</option><option value="pen">فقط استایلوس فعال</option></select></label><button data-a="cal">کالیبره</button></div>
@@ -49,15 +54,15 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
  <div class="r"><label><input type="checkbox" id="cm"> دوربین (چهره)</label><label>نرمی صدا: <select id="sf"><option value="0">طبیعی</option><option value="3">ملایم</option><option value="6">نرم‌تر</option></select></label></div>
 </div>
 <div id="cd"></div><div id="ts"></div>
-<script src="jszip.min.js"></script><script>if(typeof JSZip=="undefined"){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"><\/script>')}</script><script src="pptx.js"></script>
+<script src="jszip.min.js"></script><script>if(typeof JSZip=="undefined"){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"><\/script>')}</script><script src="pptx.js"></script><script src="pptw.js"></script>
 <script>
 const $=s=>document.querySelector(s),cv=$('#c'),cx=cv.getContext('2d'),W=1400,GAP=14,bar=$('#bar'),sh=$('#sh'),vid=$('#vid');
 let _pj=null;
 async function openDoc(buf,type){buf=new Uint8Array(buf);
  if(type=='pptx'){if(!window.PPTX||typeof JSZip=='undefined')throw new Error('lib');const d=await PPTX.load(buf.buffer.slice(buf.byteOffset,buf.byteOffset+buf.byteLength));if(!d.slides.length)throw new Error('empty');
-  return{numPages:d.slides.length,getPage:async n=>({getViewport:({scale})=>({width:1000*scale,height:1000*scale*d.h/d.w}),render:({canvasContext:g,viewport:v})=>({promise:d.render(n-1,g.canvas,v.width)})})}}
+  return{deck:d,text:n=>d.text(n-1),numPages:d.slides.length,getPage:async n=>({getViewport:({scale})=>({width:1000*scale,height:1000*scale*d.h/d.w}),render:({canvasContext:g,viewport:v})=>({promise:d.render(n-1,g.canvas,v.width)})})}}
  if(!_pj){_pj=await import('./pdf.min.mjs');_pj.GlobalWorkerOptions.workerSrc='./pdf.worker.min.mjs'}
- return _pj.getDocument({data:buf}).promise}
+ return _pj.getDocument({data:buf,wasmUrl:'./'}).promise}
 let secs=[],cur=0,act=0,pi=-1,vel=null,cal=null,S={tool:'pen',color:'#35e0c2',w:4,mode:'two',th:null},V={s:1,x:0,y:0},dirty=1,rec=null,live=null,drawing=null,g0=null,TH={},cam={on:0},k=1;
 const ptr=new Map(),mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
 const toast=t=>{const e=$('#ts');e.textContent=t;e.style.opacity=1;clearTimeout(e.t);e.t=setTimeout(()=>e.style.opacity=0,2200)};
@@ -66,7 +71,7 @@ const T=[['pen','✎','قلم'],['hl','▮','هایلایت'],['eraser','⌫','�
 bar.innerHTML='<div id="tabs"></div>'+T.map(([a,i,t])=>`<button class="t" data-k="${a}" title="${t}">${i}</button>`).join('')+'<input type="color" id="col" value="#35e0c2">'+
 ['#35e0c2','#ff5c7a','#ffd166','#6c8bff','#ffffff','#172033'].map(c=>`<button class="sw" style="background:${c}" data-c="${c}"></button>`).join('')+
 '<input type="range" id="wd" min="1" max="30" value="4"><button class="t" data-a="undo">↶</button><button class="t" data-a="redo">↷</button><button class="t" data-a="theme">◐</button><button class="t" data-a="pal">🎨</button><button class="t" data-a="sheet">▤</button>'+'<div class="ts"><span>👆 لمس</span><input type="color" id="tcl" value="#35e0c2" title="رنگ نشانگر لمس"><input type="range" id="tsz" min="8" max="60" value="20" style="width:100%;accent-color:var(--ac)" title="اندازه‌ی نشانگر لمس"></div>';
-bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۱۲</div>');
+bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۱۴</div>');
 const icon={board:'⬜',book:'📕',img:'🖼',vid:'🎞'};
 const nm={board:'تخته',book:'کتاب',img:'عکس',vid:'ویدیو'};
 function ui(){const q=$('#qt');if(q){const h=S.tool=='hand';q.textContent=h?'✋':'✎';q.style.background=h?'var(--ac)':'var(--pn)';q.style.color=h?'#06201b':'inherit'}bar.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k==S.tool));pi=-1;vui();const n={};
@@ -95,7 +100,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  else if(d.a=='redo'){const s=secs[cur],it=s.rhist.pop();if(it){s.hist.push(it);it.strokes.push(it.redo.pop());redrawInk(it);scheduleSave()}}
  else if(d.a=='pal'){palSet((palN+1)%PAL.length);toast('رنگ‌بندی: '+PAL[palN][0])}
  else if(d.a=='theme'){document.documentElement.classList.toggle('day');theme()}
- else if(d.a=='vplay')vtog();else if(d.a=='music')musicDlg();else if(d.a=='clr')clearInk();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
+ else if(d.a=='vplay')vtog();else if(d.a=='music')musicDlg();else if(d.a=='autoclip')autoDlg();else if(d.a=='topptx')toPptx();else if(d.a=='ovbox'){sh.classList.add('h');window.ovDlg&&ovDlg()}else if(d.a=='aiwiz'){sh.classList.add('h');window.wizDlg&&wizDlg()}else if(d.a=='pdfimg'){sh.classList.add('h');window.imgDlg&&imgDlg()}else if(d.a=='clr')clearInk();else if(d.a=='sheet')sh.classList.toggle('h');else if(d.a=='fit')fit();else if(d.a=='cal')calib();
  else if(d.a=='new')addSec(mkSec('تخته',[{h:2400}],'board'));
  else if(d.a=='copy'){const it=midItem();if(it.pdf&&!it.bg){toast('صفحه هنوز آماده نیست');return}if(!it.ink&&it.strokes.length)redrawInk(it);
   const c=mk(W,it.h),x=c.getContext('2d');x.fillStyle=(it.bg||it.img)?'#fff':TH.pp;x.fillRect(0,0,W,it.h);it.bg&&x.drawImage(it.bg,0,0);it.video&&x.drawImage(it.video,0,0,W,it.h);it.ink&&x.drawImage(it.ink,0,0);
@@ -203,16 +208,16 @@ function paintTouches(){if(!(TOUCH||S.tool=='point')||(!tpm.size&&!taps.length))
  dirty=1}
 function draw(){dirty=0;cx.setTransform(1,0,0,1,0,0);cx.fillStyle=TH.bg;cx.fillRect(0,0,cv.width,cv.height);const s=secs[cur];if(!s)return;
  cx.setTransform(k*V.s,0,0,k*V.s,k*V.x,k*V.y);const y0=-V.y/V.s,y1=y0+innerHeight/V.s;
- for(const it of s.items){if(it.y+it.h<y0||it.y>y1)continue;need(it);cx.fillStyle=it.video?'#000':(it.pdf||it.bg)?'#fff':TH.pp;cx.fillRect(0,it.y,W,it.h);it.bg&&cx.drawImage(it.bg,0,it.y);it.video&&it.video.readyState>1&&cx.drawImage(it.video,0,it.y,W,it.h);it.ink&&cx.drawImage(it.ink,0,it.y);
+ for(const it of s.items){if(solo&&it!==solo)continue;if(it.y+it.h<y0||it.y>y1)continue;need(it);cx.fillStyle=it.video?'#000':(it.pdf||it.bg)?'#fff':TH.pp;cx.fillRect(0,it.y,W,it.h);it.bg&&cx.drawImage(it.bg,0,it.y);it.video&&it.video.readyState>1&&cx.drawImage(it.video,0,it.y,W,it.h);it.ink&&cx.drawImage(it.ink,0,it.y);window.ovDraw&&ovDraw(it);
   if(live&&live.it===it&&live.tool!='pen'&&live.tool!='eraser'){cx.save();cx.translate(0,it.y);paint(cx,live);cx.restore()}}
- const c=s.items.indexOf(itemAt(s,(innerHeight/2-V.y)/V.s));if(c!==pi){pi=c;$('#lab').textContent=s.items.length>1?'صفحه '+(c+1)+' از '+s.items.length:s.name;$('#sl').max=s.items.length;$('#sl').value=c+1}
+ const c=s.items.indexOf(itemAt(s,(innerHeight/2-V.y)/V.s));if(c!==pi){pi=c;if(rec&&window.ovPlay&&s.items[c])ovPlay(s.items[c]);$('#lab').textContent=s.items.length>1?'صفحه '+(c+1)+' از '+s.items.length:s.name;$('#sl').max=s.items.length;$('#sl').value=c+1}
  cx.setTransform(1,0,0,1,0,0);paintTouches();
  if(cam.on&&vid.videoWidth){const r=k*48,x=cv.width-r-k*12,y=r+k*12,m=Math.min(vid.videoWidth,vid.videoHeight);cx.save();cx.beginPath();cx.arc(x,y,r,0,7);cx.clip();
   cx.drawImage(vid,(vid.videoWidth-m)/2,(vid.videoHeight-m)/2,m,m,x-r,y-r,2*r,2*r);cx.restore();cx.lineWidth=k*3;cx.strokeStyle='#35e0c2';cx.beginPath();cx.arc(x,y,r,0,7);cx.stroke()}}
 (function loop(){(dirty||rec||cam.on||(cvid()&&!cvid().paused))&&draw();requestAnimationFrame(loop)})();
 $('#cm').onchange=async e=>{if(e.target.checked){try{cam.st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:320,height:320}});vid.srcObject=cam.st;await vid.play();cam.on=1}catch{e.target.checked=false;toast('دسترسی به دوربین ممکن نشد')}}else{cam.st?.getTracks().forEach(t=>t.stop());cam.on=0;dirty=1}};
 // ---- recording (screen canvas + camera bubble + cleaned mic audio)
-let chunks=[],aud,tmr,t0,acc=0;
+var solo=null;let chunks=[],aud,tmr,t0,acc=0;
 const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
 $('#rb').onclick=async()=>{if(rec){rec.stop();return}
  let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1,sampleRate:48000}})}catch{toast('دسترسی به میکروفون لازم است');return}
@@ -229,6 +234,35 @@ $('#rb').onclick=async()=>{if(rec){rec.stop();return}
  tmr=setInterval(()=>{if(rec.state=='recording')$('#tm').textContent=fmt(acc+(Date.now()-t0)/1000)},500);navigator.wakeLock?.request('screen').catch(()=>{})};
 $('#ps').onclick=()=>{if(rec.state=='recording'){rec.pause();cvid()?.pause();acc+=(Date.now()-t0)/1000;$('#ps').textContent='▶'}else{rec.resume();if($('#va').checked)cvid()?.play().catch(()=>{});t0=Date.now();$('#ps').textContent='⏸'}};
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+
+// ---- صفحه‌ها ← پاورپوینت، و ساخت کلیپ خودکار
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function ensurePage(it){if(it.pdf&&!it.bg){while(act>=2)await sleep(40);await render(it);while(it.busy)await sleep(40)}if(!it.ink&&it.strokes.length)redrawInk(it)}
+function pageCanvas(it){const c=mk(W,Math.round(it.h));const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);it.bg&&g.drawImage(it.bg,0,0);it.ink&&g.drawImage(it.ink,0,0);window.ovPaint&&ovPaint(g,it);return c}
+async function toPptx(){const s=secs[cur];sh.classList.add('h');if(!s||!s.items.length||!window.PPTW||typeof JSZip=='undefined'){toast('اول فایل یا عکس باز کن (و pptw.js کنار index.html باشد)');return}
+ const n=s.items.length,imgs=[];try{for(let k=0;k<n;k++){toast('آماده‌سازی صفحه '+(k+1)+' از '+n+'…');const it=s.items[k];await ensurePage(it);const c=pageCanvas(it);imgs.push({blob:await new Promise(r=>c.toBlob(r,'image/jpeg',.88)),w:c.width,h:c.height})}
+  toast('در حال ساخت پاورپوینت…');const blob=await PPTW.build(imgs,imgs[0].h/imgs[0].w,()=>{});dlBlob(blob,(s.name||'presentation').replace(/[\\/:*?"<>|]/g,'_')+'.pptx');toast('پاورپوینت ساخته شد ('+n+' اسلاید، هر صفحه یک تصویر)')}catch(e){console.error(e);toast('ساخت پاورپوینت ناموفق بود')}}
+function autoDlg(){const s=secs[cur];sh.classList.add('h');if(!s||!s.items.length||s.kind=='vid'){toast('اول PDF، پاورپوینت یا عکس باز کن');return}if(rec){toast('اول ضبط را تمام کن');return}
+ const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:#000b;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px';const n=s.items.length;
+ o.innerHTML=`<div class="pn" style="position:static;padding:16px;max-width:360px;width:100%;line-height:2;display:flex;flex-direction:column;gap:8px;font-size:14px"><b>🎞 کلیپ خودکار از «${s.name}»</b><small>هر صفحه چند ثانیه نشان داده می‌شود و فیلم بی‌صدا ذخیره می‌شود (برای آهنگ: ▤ ← 🎵).</small>
+ <label>هر صفحه چند ثانیه؟ <input type="number" id="acs" value="6" min="1" max="120" style="width:70px"></label>
+ <label>از صفحه <input type="number" id="acf" value="1" min="1" max="${n}" style="width:60px"> تا <input type="number" id="act" value="${n}" min="1" max="${n}" style="width:60px"></label>
+ <label><input type="checkbox" id="acr" checked> صفحه‌های بلند به‌آرامی پایین بروند</label>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="on" id="acg">▶ شروع ساخت</button><button id="acx">بستن</button></div></div>`;document.body.appendChild(o);
+ o.querySelector('#acx').onclick=()=>o.remove();
+ o.querySelector('#acg').onclick=()=>{const sec=Math.max(1,+o.querySelector('#acs').value||6),a=Math.max(1,Math.min(n,+o.querySelector('#acf').value||1)),b=Math.max(a,Math.min(n,+o.querySelector('#act').value||n)),sc=o.querySelector('#acr').checked;o.remove();autoClip(s,a-1,b-1,sec,sc)}}
+async function autoClip(s,a,b,sec,scr){
+ bar.classList.add('h');sh.classList.add('h');const keep={...V};
+ try{for(let n=a;n<=b;n++){toast('آماده‌سازی صفحه '+(n+1)+'…');await ensurePage(s.items[n])}}catch{}
+ const mt=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+ const vs=cv.captureStream(24),ch=[];const mr=new MediaRecorder(vs,{mimeType:mt,videoBitsPerSecond:2500000});mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+ const stop=document.createElement('button');stop.textContent='■ توقف و ذخیره';stop.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:70;padding:10px 18px;background:#c0392b;color:#fff;border:0;border-radius:12px;font:inherit';document.body.appendChild(stop);
+ let cancel=false;stop.onclick=()=>{cancel=true};
+ const fin=new Promise(r=>mr.onstop=r);rec=mr;solo=null;mr.start(1000);
+ for(let n=a;n<=b&&!cancel;n++){const it=s.items[n];solo=it;window.ovPlay&&ovPlay(it);V.s=innerWidth/W;V.x=0;const ph=it.h*V.s,ext=Math.max(0,ph-innerHeight),base=-it.y*V.s+(ph<innerHeight?(innerHeight-ph)/2:0),t0=performance.now(),dur=sec*1000;
+  while(!cancel){const e=performance.now()-t0;if(e>=dur)break;V.y=base-(scr&&ext?ext*Math.min(1,e/(dur*.85)):0);dirty=1;$('#tm').style.display='block';$('#tm').textContent='صفحه '+(n+1)+' از '+(b+1)+' · '+fmt(e/1000);await new Promise(r=>requestAnimationFrame(r))}}
+ solo=null;mr.state!='inactive'&&mr.stop();await fin;rec=null;stop.remove();$('#tm').style.display='none';V.s=keep.s;V.x=keep.x;V.y=keep.y;cl();bar.classList.remove('h');
+ const ext2=mt.includes('mp4')?'mp4':'webm',blob=new Blob(ch,{type:mt.split(';')[0]});lastClip={blob};dlBlob(blob,'clip-'+Date.now()+'.'+ext2);toast('کلیپ ذخیره شد ('+ext2.toUpperCase()+')')}
 // ---- background music over a finished clip (clip + music are re-recorded together, real time)
 let lastClip=null;
 function mixMusic(clip,mus,vol,fade,say){let cancelled=false,stop=null;
@@ -276,7 +310,7 @@ let cdb=null,cready=false,svT=0;
 const cidb=()=>new Promise((res,rej)=>{const r=indexedDB.open('clipmaker',1);r.onupgradeneeded=()=>{['proj','pdf','rec'].forEach(n=>r.result.createObjectStore(n,{keyPath:'id'}))};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const ctx_=(st,m,f)=>new Promise((res,rej)=>{const t=cdb.transaction(st,m),q=f(t.objectStore(st));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)});
 const cput=(s,v)=>cdb?ctx_(s,'readwrite',o=>o.put(v)).catch(()=>{}):0,cget=(s,k)=>cdb?ctx_(s,'readonly',o=>o.get(k)).catch(()=>null):Promise.resolve(null),call=s=>cdb?ctx_(s,'readonly',o=>o.getAll()).catch(()=>[]):Promise.resolve([]),cdel=(s,k)=>cdb?ctx_(s,'readwrite',o=>o.delete(k)).catch(()=>{}):0;
-const ser=s=>({name:s.name,kind:s.kind,pdf:s.pdfId||null,V:s.V,items:s.items.map(it=>({h:it.h,no:it.no,img:it.bg&&!it.pdf?(it.bgUrl||(it.bgUrl=it.bg.toDataURL('image/jpeg',.85))):null,strokes:it.strokes.map(({tool,color,w,pts})=>({tool,color,w,pts:pts.map(p=>({x:+p.x.toFixed(1),y:+p.y.toFixed(1)}))}))}))});
+const ser=s=>({name:s.name,kind:s.kind,pdf:s.pdfId||null,V:s.V,items:s.items.map(it=>({ov:(it.ov||[]).map(o=>({...o,_im:undefined,_k:undefined,_l:undefined,_h:undefined})),h:it.h,no:it.no,img:it.bg&&!it.pdf?(it.bgUrl||(it.bgUrl=it.bg.toDataURL('image/jpeg',.85))):null,strokes:it.strokes.map(({tool,color,w,pts})=>({tool,color,w,pts:pts.map(p=>({x:+p.x.toFixed(1),y:+p.y.toFixed(1)}))}))}))});
 const saveNow=()=>{if(cdb&&cready)cput('proj',{id:'main',t:Date.now(),cur,secs:secs.map(ser)})};
 const scheduleSave=()=>{clearTimeout(svT);svT=setTimeout(saveNow,1500)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveNow()});addEventListener('pagehide',saveNow);
@@ -285,7 +319,7 @@ async function restoreProject(P){const out=[];
   if(q.kind=='book'){const r=q.pdf&&await cget('pdf',q.pdf);if(!r)continue;const doc=await openDoc(r.data.slice(0),r.pt||'pdf');items=q.items.map((i,n)=>({pdf:doc,no:i.no||n+1,h:i.h}))}
   else if(q.kind=='vid'){const r=q.pdf&&await cget('pdf',q.pdf);if(!r)continue;try{items=[await mkVid(r.data)]}catch{continue}}
   else items=await Promise.all(q.items.map(async i=>{const o={h:i.h};if(i.img){const im=new Image();await new Promise(r=>{im.onload=r;im.onerror=r;im.src=i.img});const c=mk(W,i.h);c.getContext('2d').drawImage(im,0,0,W,i.h);o.bg=c;o.img=1;o.bgUrl=i.img}return o}));
-  const s=mkSec(q.name,items,q.kind);s.pdfId=q.pdf;q.items.forEach((i,n)=>{s.items[n].strokes=i.strokes});s.V=q.V;out.push(s);
+  const s=mkSec(q.name,items,q.kind);s.pdfId=q.pdf;q.items.forEach((i,n)=>{s.items[n].strokes=i.strokes;s.items[n].ov=i.ov||[]});s.V=q.V;out.push(s);
   if(q.kind=='book'&&items.length)sizeAll(s,items[0].pdf)}
  return out}
 function ask(html,buttons){return new Promise(res=>{const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:#000b;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -306,4 +340,5 @@ async function recoverRecordings(){const l=await call('rec');if(!l.length)return
  if(sec&&sec.length){sec.forEach(s=>secs.push(s));go(Math.min(P.cur||0,secs.length-1))}else addSec(mkSec('تخته',[{h:2400}],'board'));
  cready=true;ui();saveNow();recoverRecordings()})();
 
-</script></body></html>
+</script>
+<script src="extra.js"></script></body></html>
