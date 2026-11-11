@@ -36,7 +36,7 @@ input[type=number]{width:64px;font:inherit;background:transparent;color:var(--tx
 <canvas id="c"></canvas><div id="cr">تهیه‌کننده: وحیده محجوب</div><video id="vid" playsinline muted style="position:fixed;width:2px;height:2px;opacity:0;pointer-events:none"></video>
 <div id="side"><button id="mn" title="ابزارها">☰</button><button id="qt" title="قلم / حرکت">✎</button><button id="qh" title="نمایش لمس‌ها در کلیپ (بدون خط)">👆</button><button id="qu" title="برگردان">↶</button><button id="cl" data-a="clr" title="پاک کردن همه‌ی نوشته‌های این صفحه">🧹</button><button id="rb" title="ضبط">●</button><button id="ps" style="display:none">⏸</button><button id="vp" data-a="vplay" title="پخش/توقف ویدیو" style="display:none">⏯</button><span id="tm" style="display:none">00:00</span></div>
 <div id="bar" class="pn"></div>
-<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۱۰</div><select id="pal" style="width:100%;margin-bottom:6px"></select>
+<div id="sh" class="pn h"><div style="text-align:center;font-size:12px;opacity:.7;padding:2px 0 6px">کلیپ‌ساز · نسخه ۱۲</div><select id="pal" style="width:100%;margin-bottom:6px"></select>
  <div class="r"><b id="lab">-</b><input type="range" id="sl" min="1" max="1" value="1" style="flex:1;min-width:120px;accent-color:var(--ac)"></div>
   <div class="r"><label class="b p">📕 کتاب / پاورپوینت<input type="file" accept="application/pdf,.pdf,.ppt,.pptx,.pps,.ppsx,.odp" hidden id="fp"></label><label class="b">🖼 عکس<input type="file" accept="image/*" hidden id="fi"></label><label class="b p">🎞 ویدیو<input type="file" accept="video/*" hidden id="fv"></label><button data-a="new">＋ تخته</button><button data-a="fit">اندازه‌ی صفحه</button></div>
  <div class="r" id="vr" style="display:none"><button data-a="vplay">▶</button><input type="range" id="vs" min="0" max="1" step="0.1" value="0" style="flex:1;min-width:100px;accent-color:var(--ac)"><span id="vt" style="font-size:12px">0:00</span></div>
@@ -66,7 +66,7 @@ const T=[['pen','✎','قلم'],['hl','▮','هایلایت'],['eraser','⌫','�
 bar.innerHTML='<div id="tabs"></div>'+T.map(([a,i,t])=>`<button class="t" data-k="${a}" title="${t}">${i}</button>`).join('')+'<input type="color" id="col" value="#35e0c2">'+
 ['#35e0c2','#ff5c7a','#ffd166','#6c8bff','#ffffff','#172033'].map(c=>`<button class="sw" style="background:${c}" data-c="${c}"></button>`).join('')+
 '<input type="range" id="wd" min="1" max="30" value="4"><button class="t" data-a="undo">↶</button><button class="t" data-a="redo">↷</button><button class="t" data-a="theme">◐</button><button class="t" data-a="pal">🎨</button><button class="t" data-a="sheet">▤</button>'+'<div class="ts"><span>👆 لمس</span><input type="color" id="tcl" value="#35e0c2" title="رنگ نشانگر لمس"><input type="range" id="tsz" min="8" max="60" value="20" style="width:100%;accent-color:var(--ac)" title="اندازه‌ی نشانگر لمس"></div>';
-bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۱۰</div>');
+bar.insertAdjacentHTML('beforeend','<div style="font-size:11px;opacity:.65;text-align:center;padding:6px 0">کلیپ‌ساز · نسخه ۱۲</div>');
 const icon={board:'⬜',book:'📕',img:'🖼',vid:'🎞'};
 const nm={board:'تخته',book:'کتاب',img:'عکس',vid:'ویدیو'};
 function ui(){const q=$('#qt');if(q){const h=S.tool=='hand';q.textContent=h?'✋':'✎';q.style.background=h?'var(--ac)':'var(--pn)';q.style.color=h?'#06201b':'inherit'}bar.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k==S.tool));pi=-1;vui();const n={};
@@ -169,7 +169,7 @@ function inkable(e){if(S.tool=='hand'||S.tool=='point')return false;if(e.pointer
 function calib(){const st=[];toast('یک بار با نوک خودکار روی صفحه بزن');sh.classList.add('h');cal=e=>{if(e.pointerType!='touch'){toast('قلم شما نوع استایلوس است؛ نیازی به کالیبره نیست');cal=null;return}
  st.push(Math.max(e.width,e.height));if(st.length==1)toast('حالا با انگشت بزن');else{cal=null;const[p,f]=st;if(f-p>=1.5){S.th=(p+f)/2;S.mode='auto';$('#md').value='auto';saveS();toast('انجام شد: خودکار می‌نویسد، انگشت اسکرول می‌کند')}else toast('این گوشی اندازه‌ی لمس را گزارش نمی‌کند؛ حالت «دو انگشتی» را نگه دار')}}}
 function abortDraw(){const it=live.it;live=null;drawing=null;redrawInk(it)}
-cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);if(cal)return cal(e);const s=secs[cur];if(!s)return;if(S.tool=='point'){e.preventDefault();return}const touch=e.pointerType=='touch',pos={x:e.clientX,y:e.clientY};
+cv.onpointerdown=e=>{try{cv.setPointerCapture(e.pointerId)}catch{}if(cal)return cal(e);const s=secs[cur];if(!s)return;if(S.tool=='point'){e.preventDefault();ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});g0=gest();vel=null;return}const touch=e.pointerType=='touch',pos={x:e.clientX,y:e.clientY};
  if(drawing){if(touch&&drawing.touch&&S.mode=='two'){const d=drawing;abortDraw();ptr.set(d.id,d.pos);ptr.set(e.pointerId,pos);g0=gest()}return}
  if(inkable(e)){const it=itemAt(s,(e.clientY-V.y)/V.s);if(!it.ink)redrawInk(it);drawing={id:e.pointerId,touch,pos};live={tool:S.tool,color:S.color,w:S.w,it,pts:[pt(e,it)]};ptr.clear();
   if(!rec)bar.classList.add('h');sh.classList.add('h');dirty=1;return}
@@ -178,6 +178,7 @@ cv.onpointermove=e=>{if(drawing){if(e.pointerId!=drawing.id)return;drawing.pos={
   for(const ev of(e.getCoalescedEvents?.()||[e])){const q=pt(ev,live.it),a=live.pts[live.pts.length-1];live.pts.push(q);
    if(live.tool=='pen'||live.tool=='eraser'){c.save();sty(c,live);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(q.x,q.y);c.stroke();c.restore()}}dirty=1;return}
  if(!ptr.has(e.pointerId))return;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});const g=gest();
+ if(S.tool=='point'&&g.n<2){g0=g;return}
  if(g0&&g0.n==g.n){const dt=g.t-g0.t;V.x+=g.x-g0.x;V.y+=g.y-g0.y;if(g.d&&g0.d)zoom(g.d/g0.d,g.x,g.y);else cl();if(g.n==1&&dt>0)vel={x:(g.x-g0.x)/dt,y:(g.y-g0.y)/dt,t:g.t}}g0=g};
 function fling(){const v={x:vel.x,y:vel.y};let t=performance.now();const f=()=>{const n=performance.now(),dt=n-t;t=n;V.x+=v.x*dt;V.y+=v.y*dt;v.x*=.95;v.y*=.95;cl();
  if((Math.abs(v.x)>.03||Math.abs(v.y)>.03)&&!ptr.size&&!drawing)requestAnimationFrame(f)};requestAnimationFrame(f)}
@@ -190,8 +191,8 @@ let TOUCH=0;try{TOUCH=+localStorage.cm_tc||0}catch{}
 const tpm=new Map(),taps=[];let TS={c:'#35e0c2',z:20};try{Object.assign(TS,JSON.parse(localStorage.cm_ts||'{}'))}catch{}
 const rgba=(h,a)=>{const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`};
 $('#tcl').value=TS.c;$('#tsz').value=TS.z;const svTS=()=>{try{localStorage.cm_ts=JSON.stringify(TS)}catch{}};$('#tcl').oninput=e=>{TS.c=e.target.value;svTS();dirty=1};$('#tsz').oninput=e=>{TS.z=+e.target.value;svTS();dirty=1};
-function setTouch(v){TOUCH=v?1:0;try{localStorage.cm_tc=TOUCH}catch{}$('#tc').checked=!!TOUCH;const b=$('#qh');b.style.background=TOUCH?'var(--ac)':'var(--pn)';b.style.color=TOUCH?'#06201b':'inherit';if(!TOUCH){tpm.clear();taps.length=0}dirty=1}
-$('#tc').onchange=e=>setTouch(e.target.checked);$('#qh').onclick=()=>setTouch(!TOUCH);setTouch(TOUCH);
+function setTouch(v,u){TOUCH=v?1:0;if(u){if(TOUCH){if(S.tool!='point')S.pre=S.tool;S.tool='point'}else if(S.tool=='point')S.tool=S.pre&&S.pre!='point'?S.pre:'pen';toast(TOUCH?'فقط نمایش لمس: بدون خط و بدون جابه‌جایی صفحه':'برگشت به ابزار قبلی');try{ui()}catch{}}try{localStorage.cm_tc=TOUCH}catch{}$('#tc').checked=!!TOUCH;const b=$('#qh');b.style.background=TOUCH?'var(--ac)':'var(--pn)';b.style.color=TOUCH?'#06201b':'inherit';if(!TOUCH){tpm.clear();taps.length=0}dirty=1}
+$('#tc').onchange=e=>setTouch(e.target.checked,1);$('#qh').onclick=()=>setTouch(!TOUCH,1);setTouch(TOUCH);
 cv.addEventListener('pointerdown',e=>{if(!TOUCH&&S.tool!='point')return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};tpm.set(e.pointerId,{...p,tr:[{...p,t:n}]});taps.push({...p,t:n});dirty=1},true);
 cv.addEventListener('pointermove',e=>{const o=tpm.get(e.pointerId);if(!o)return;const n=performance.now(),p={x:e.clientX*k,y:e.clientY*k};o.x=p.x;o.y=p.y;o.tr.push({...p,t:n});while(o.tr.length&&n-o.tr[0].t>450)o.tr.shift();dirty=1},true);
 const tpUp=e=>{if(tpm.delete(e.pointerId))dirty=1};cv.addEventListener('pointerup',tpUp,true);cv.addEventListener('pointercancel',tpUp,true);
